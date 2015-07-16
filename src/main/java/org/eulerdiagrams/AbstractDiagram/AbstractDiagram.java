@@ -1,22 +1,18 @@
 package org.eulerdiagrams.AbstractDiagram;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * An AbstractDiagram is a set of zones defined over a fixed set of contours.
- *
- * We don't use org.eulerdiagrams.vennom.apCircles.AbstractDiagram as that is expected to be hugely refactored.
- *
- */
 public class AbstractDiagram {
-    private Set<AbstractContour> contours;
-    private Map<AbstractZone, Double> zones = new HashMap<AbstractZone, Double>();
+    protected Set<AbstractContour> contours;
+    private Set<AbstractZone> zones = new HashSet<AbstractZone>();
 
     public AbstractDiagram(Set<AbstractContour> contours) {
         this.contours = contours;
     }
 
-    public boolean addZone(double weight, AbstractContour ... inset) {
+    public boolean addZone(AbstractContour ... inset) {
         Set<AbstractContour> outzones = new HashSet<AbstractContour>(contours);
 
         for(AbstractContour c : inset) {
@@ -26,7 +22,7 @@ public class AbstractDiagram {
                 return false;
             }
         }
-        zones.put(new AbstractZone(new HashSet<AbstractContour>(Arrays.asList(inset)), outzones), weight);
+        zones.add(new AbstractZone(new HashSet<AbstractContour>(Arrays.asList(inset)), outzones));
         return true;
     }
 
@@ -34,7 +30,7 @@ public class AbstractDiagram {
         return contours;
     }
 
-    public final Map<AbstractZone, Double> getZones() {
+    public Set<AbstractZone> getZones() {
         return zones;
     }
 }
