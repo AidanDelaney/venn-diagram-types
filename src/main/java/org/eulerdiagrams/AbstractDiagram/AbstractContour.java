@@ -11,6 +11,10 @@ public class AbstractContour {
         this.label = s;
     }
 
+    public final String getLabel() {
+        return label;
+    }
+
     @Override
     public boolean equals(Object o) {
         return o.equals(label);

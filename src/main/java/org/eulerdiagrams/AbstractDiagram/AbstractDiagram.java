@@ -2,6 +2,7 @@ package org.eulerdiagrams.AbstractDiagram;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public class AbstractDiagram {
@@ -24,6 +25,10 @@ public class AbstractDiagram {
         }
         zones.add(new AbstractZone(new HashSet<AbstractContour>(Arrays.asList(inset)), outzones));
         return true;
+    }
+
+    public Optional<AbstractContour> findContourByLabel(String c) {
+        return contours.stream().filter(x -> x.getLabel().equals(c)).findFirst();
     }
 
     public final Set<AbstractContour> getContours() {

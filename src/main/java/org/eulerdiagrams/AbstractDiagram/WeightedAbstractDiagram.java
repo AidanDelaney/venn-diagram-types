@@ -3,9 +3,8 @@ package org.eulerdiagrams.AbstractDiagram;
 import java.util.*;
 
 /**
- * An AbstractDiagram is a set of zones defined over a fixed set of contours.
- *
- * We don't use org.eulerdiagrams.vennom.apCircles.AbstractDiagram as that is expected to be hugely refactored.
+ * A WeigthedAbstractDiagram is a set of zone/weight pairs defined over a fixed 
+ * set of contours.
  *
  */
 public class WeightedAbstractDiagram extends AbstractDiagram {
