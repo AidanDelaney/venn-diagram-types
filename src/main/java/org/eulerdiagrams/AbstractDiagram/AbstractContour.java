@@ -16,8 +16,15 @@ public class AbstractContour {
     }
 
     @Override
+    public String toString() {
+        return getLabel();
+    }
+
+    @Override
     public boolean equals(Object o) {
-        return o.equals(label);
+        if(! (o instanceof AbstractContour)) return false;
+        AbstractContour other = (AbstractContour) o;
+        return other.getLabel().equals(label);
     }
 
     @Override
