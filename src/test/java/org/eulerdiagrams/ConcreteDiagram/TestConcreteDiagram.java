@@ -8,7 +8,6 @@ import java.util.*;
 
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.DirectedEdge;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 import org.eulerdiagrams.vennom.graph.Edge;
@@ -16,6 +15,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import math.geom2d.Point2D;
 
+import org.jgrapht.graph.DefaultEdge;
 import org.junit.Before;
 import org.junit.Test;
 import static org.hamcrest.Matchers.*;
@@ -28,7 +28,6 @@ public class TestConcreteDiagram {
     public void setUp() {
         a = new AbstractContour("A");
         b = new AbstractContour("B");
-        c = new AbstractContour("C");
     }
 
     @Test
@@ -58,18 +57,18 @@ public class TestConcreteDiagram {
 
         ConcreteDiagram cd = new ConcreteDiagram(g, ad);
 
-        DirectedGraph<ConcreteZone, DirectedEdge> actual = getContainmentHeirarchy(cd);
+        DirectedGraph<ConcreteZone, DefaultEdge> actual = getContainmentHeirarchy(cd);
 
         // Build an expected containment graph
-        DirectedGraph<ConcreteZone, DirectedEdge> expected = new DefaultDirectedGraph<ConcreteZone, DirectedEdge>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
 
         assertThat(expected, is(equalTo(getContainmentHeirarchy(cd))));
     }
 
     @Test
     public void testContainmentGraph() {
-        DirectedGraph<ConcreteZone, DirectedEdge> x = new DefaultDirectedGraph<>(DirectedEdge.class);
-        DirectedGraph<ConcreteZone, DirectedEdge> y = new DefaultDirectedGraph<>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> x = new DefaultDirectedGraph<>(DefaultEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> y = new DefaultDirectedGraph<>(DefaultEdge.class);
 
         assertThat(x, equalTo(y));
 
@@ -100,17 +99,15 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(circles);
 
         // Build an expected containment graph
-        DirectedGraph<ConcreteZone, DirectedEdge> expected = new DefaultDirectedGraph<ConcreteZone, DirectedEdge>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
         expected.addVertex(ConcreteZone.Top.getInstance());
         expected.addVertex(za);
         expected.addVertex(zb);
 
-        DirectedEdge t_za = new DirectedEdge(ConcreteZone.Top.getInstance(), za);
-        DirectedEdge t_zb = new DirectedEdge(ConcreteZone.Top.getInstance(), zb);
-        expected.addEdge(ConcreteZone.Top.getInstance(), za, t_za);
-        expected.addEdge(ConcreteZone.Top.getInstance(), zb, t_zb);
+        expected.addEdge(ConcreteZone.Top.getInstance(), za);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zb);
 
-        assertThat(expected, equalTo(getContainmentHeirarchy(d)));
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
     @Test
@@ -125,7 +122,7 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(circles);
 
         // Build an expected containment graph
-        DirectedGraph<ConcreteZone, DirectedEdge> expected = new DefaultDirectedGraph<ConcreteZone, DirectedEdge>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
         expected.addVertex(ConcreteZone.Top.getInstance());
         expected.addVertex(za);
         expected.addVertex(zab);
@@ -150,7 +147,7 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(circles);
 
         // Build an expected containment graph
-        DirectedGraph<ConcreteZone, DirectedEdge> expected = new DefaultDirectedGraph<ConcreteZone, DirectedEdge>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
         expected.addVertex(ConcreteZone.Top.getInstance());
         expected.addVertex(za);
         expected.addVertex(zab);
@@ -175,24 +172,23 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(circles);
 
         // Build an expected containment graph
-        DirectedGraph<ConcreteZone, DirectedEdge> expected = new DefaultDirectedGraph<ConcreteZone, DirectedEdge>(DirectedEdge.class);
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
         expected.addVertex(ConcreteZone.Top.getInstance());
         expected.addVertex(zabc);
 
-        DirectedEdge edge = new DirectedEdge(ConcreteZone.Top.getInstance(), zabc);
-        expected.addEdge(ConcreteZone.Top.getInstance(), zabc, edge);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zabc);
 
-        assertThat(expected, is(equalTo(getContainmentHeirarchy(d))));
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
-    private static DirectedGraph<ConcreteZone, DirectedEdge> getContainmentHeirarchy(ConcreteDiagram d) {
+    private static DirectedGraph<ConcreteZone, DefaultEdge> getContainmentHeirarchy(ConcreteDiagram d) {
         // Now,  break the access protection on the internal containment
         // hierarchy graph, and check that the graph is correct.
-        DirectedGraph<ConcreteZone, DirectedEdge> actual = null;
+        DirectedGraph<ConcreteZone, DefaultEdge> actual = null;
         try {
             Field field = ConcreteDiagram.class.getDeclaredField("containment");
             field.setAccessible(true);
-            actual = (DirectedGraph<ConcreteZone, DirectedEdge>) field.get(d);
+            actual = (DirectedGraph<ConcreteZone, DefaultEdge>) field.get(d);
         } catch (NoSuchFieldException nsfe) {
             fail();
         } catch (IllegalAccessException iae) {
@@ -200,5 +196,23 @@ public class TestConcreteDiagram {
         }
         System.out.println(actual.toString());
         return actual;
+    }
+
+    private static boolean graphEdgeAndVertexEqualty(DirectedGraph<ConcreteZone, DefaultEdge> g1, DirectedGraph<ConcreteZone, DefaultEdge> g2) {
+        // g1.edgeSet().equals(g2.esgeSet()) doesn't work as g1 and g2 are multigraphs.  This is the "equality" we require.
+        for(DefaultEdge g1e : g1.edgeSet()) {
+            boolean thisEdgeInBoth = false;
+            ConcreteZone source = g1.getEdgeSource(g1e);
+            ConcreteZone target = g1.getEdgeTarget(g1e);
+            for(DefaultEdge g2e : g2.edgeSet()) {
+                thisEdgeInBoth |= g2.containsEdge(source, target);
+            }
+            // I have not found g1e in g2.
+            if(! thisEdgeInBoth) {
+                return false;
+            }
+        }
+
+        return g1.vertexSet().equals(g2.vertexSet());
     }
 }
