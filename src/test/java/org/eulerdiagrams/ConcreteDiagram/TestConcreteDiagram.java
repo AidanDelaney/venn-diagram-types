@@ -32,16 +32,15 @@ public class TestConcreteDiagram {
 
     @Test
     public void testVenn2() {
-        // Example taken from running K-ttlebr-cke
         Node a = new Node(), b = new Node();
-        a.setX(303);
-        a.setY(187);
+        a.setX(-5);
+        a.setY(0);
         a.setContour("a");
-        a.setLabel("6.90988298");
-        b.setX(439);
-        b.setY(110);
+        a.setLabel("7");
+        b.setX(5);
+        b.setY(0);
         b.setContour("b");
-        b.setLabel("6.90988298");
+        b.setLabel("7");
 
         Edge e = new Edge(a,b);
 
@@ -57,12 +56,31 @@ public class TestConcreteDiagram {
 
         ConcreteDiagram cd = new ConcreteDiagram(g, ad);
 
-        DirectedGraph<ConcreteZone, DefaultEdge> actual = getContainmentHeirarchy(cd);
-
         // Build an expected containment graph
         DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+        expected.addVertex(ConcreteZone.Top.getInstance());
 
-        assertThat(expected, is(equalTo(getContainmentHeirarchy(cd))));
+        AbstractContour aa = new AbstractContour("a");
+        ConcreteCircle ca = new ConcreteCircle(aa, new Point2D(-5, 0), 7);
+        ConcreteZone zca = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{ca}));
+
+        AbstractContour ab = new AbstractContour("b");
+        ConcreteCircle cb = new ConcreteCircle(ab, new Point2D(5, 0), 7);
+        ConcreteZone zcb = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{cb}));
+
+        ConcreteZone zcacb = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{ca, cb}));
+
+        expected.addVertex(zca);
+        expected.addVertex(zcb);
+        expected.addVertex(zcacb);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), zca);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zcb);
+        expected.addEdge(zca, zcacb);
+        expected.addEdge(zcb, zcacb);
+
+        //assertEquals(expected.toString(), equalTo(getContainmentHeirarchy(cd).toString()));
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(cd)));
     }
 
     @Test
@@ -70,12 +88,12 @@ public class TestConcreteDiagram {
         DirectedGraph<ConcreteZone, DefaultEdge> x = new DefaultDirectedGraph<>(DefaultEdge.class);
         DirectedGraph<ConcreteZone, DefaultEdge> y = new DefaultDirectedGraph<>(DefaultEdge.class);
 
-        assertThat(x, equalTo(y));
+        assertTrue(graphEdgeAndVertexEqualty(x, y));
 
         x.addVertex(ConcreteZone.Top.getInstance());
         y.addVertex(ConcreteZone.Top.getInstance());
 
-        assertThat(x, equalTo(y));
+        assertTrue(graphEdgeAndVertexEqualty(x, y));
 
         ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 3.0);
         x.addVertex(new ConcreteZone(ca));
@@ -84,7 +102,7 @@ public class TestConcreteDiagram {
         x.addEdge(ConcreteZone.Top.getInstance(), new ConcreteZone(ca));
         y.addEdge(ConcreteZone.Top.getInstance(), new ConcreteZone(ca));
 
-        assertThat(x, equalTo(y));
+        assertTrue(graphEdgeAndVertexEqualty(x, y));
     }
 
     @Test
@@ -130,7 +148,7 @@ public class TestConcreteDiagram {
         expected.addEdge(ConcreteZone.Top.getInstance(), za);
         expected.addEdge(za, zab);
 
-        assertThat(expected, is(equalTo(getContainmentHeirarchy(d))));
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
     @Test
@@ -157,7 +175,7 @@ public class TestConcreteDiagram {
         expected.addEdge(za, zab);
         expected.addEdge(zab, zabc);
 
-        assertThat(expected, is(equalTo(getContainmentHeirarchy(d))));
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
     @Test
@@ -194,7 +212,6 @@ public class TestConcreteDiagram {
         } catch (IllegalAccessException iae) {
             fail();
         }
-        System.out.println(actual.toString());
         return actual;
     }
 
@@ -204,11 +221,9 @@ public class TestConcreteDiagram {
             boolean thisEdgeInBoth = false;
             ConcreteZone source = g1.getEdgeSource(g1e);
             ConcreteZone target = g1.getEdgeTarget(g1e);
-            for(DefaultEdge g2e : g2.edgeSet()) {
-                thisEdgeInBoth |= g2.containsEdge(source, target);
-            }
+            
             // I have not found g1e in g2.
-            if(! thisEdgeInBoth) {
+            if(! g2.containsEdge(source, target)) {
                 return false;
             }
         }
