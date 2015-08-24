@@ -17,10 +17,16 @@ import math.geom2d.Point2D;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.hamcrest.Matchers.*;
 
 public class TestConcreteDiagram {
+
+    private final static Logger logger = LoggerFactory.getLogger(TestConcreteDiagram.class);
 
     private AbstractContour a, b, c;
 
@@ -28,6 +34,7 @@ public class TestConcreteDiagram {
     public void setUp() {
         a = new AbstractContour("A");
         b = new AbstractContour("B");
+        c = new AbstractContour("C");
     }
 
     @Test
@@ -81,6 +88,57 @@ public class TestConcreteDiagram {
 
         //assertEquals(expected.toString(), equalTo(getContainmentHeirarchy(cd).toString()));
         assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(cd)));
+    }
+
+    @Test
+    public void testVenn3() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 12.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(5, 0), 12.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(0, 5), 12.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Construct expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone za = new ConcreteZone(ca);
+        ConcreteZone zb = new ConcreteZone(cb);
+        ConcreteZone zc = new ConcreteZone(cc);
+        ConcreteZone zab = new ConcreteZone(ca, cb);
+        ConcreteZone zac = new ConcreteZone(ca, cc);
+        ConcreteZone zbc = new ConcreteZone(cb, cc);
+        ConcreteZone zabc = new ConcreteZone(ca, cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(za);
+        expected.addVertex(zb);
+        expected.addVertex(zc);
+        expected.addVertex(zab);
+        expected.addVertex(zac);
+        expected.addVertex(zbc);
+        expected.addVertex(zabc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), za);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zb);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+
+        expected.addEdge(za, zac);
+        expected.addEdge(zc, zac);
+
+        expected.addEdge(za, zab);
+        expected.addEdge(zb, zab);
+
+        expected.addEdge(zb, zbc);
+        expected.addEdge(zc, zbc);
+
+        expected.addEdge(zac, zabc);
+        expected.addEdge(zab, zabc);
+        expected.addEdge(zbc, zabc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
     @Test
@@ -148,6 +206,126 @@ public class TestConcreteDiagram {
         expected.addEdge(ConcreteZone.Top.getInstance(), za);
         expected.addEdge(za, zab);
 
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    @Test
+    public void testCrossedTunnel() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 10.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(-5, 0), 7.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(7, 0), 7.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Build expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone za = new ConcreteZone(ca);
+        ConcreteZone zc = new ConcreteZone(cc);
+
+        ConcreteZone zab = new ConcreteZone(ca, cb);
+        ConcreteZone zac = new ConcreteZone(ca, cc);
+        ConcreteZone zabc = new ConcreteZone(ca, cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(za);
+        expected.addVertex(zc);
+        expected.addVertex(zab);
+        expected.addVertex(zac);
+        expected.addVertex(zabc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), za);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+
+        expected.addEdge(za, zab);
+        expected.addEdge(za, zac);
+        expected.addEdge(zc, zac);
+        expected.addEdge(zac, zabc);
+        expected.addEdge(zab, zabc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    @Test
+    public void testCrossedVenn2() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 6.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(5, 0), 6.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(-6, 0), 6.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Build expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone za = new ConcreteZone(ca);
+        ConcreteZone zc = new ConcreteZone(cc);
+
+        ConcreteZone zab = new ConcreteZone(ca, cb);
+        ConcreteZone zac = new ConcreteZone(ca, cc);
+        ConcreteZone zabc = new ConcreteZone(ca, cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(za);
+        expected.addVertex(zc);
+        expected.addVertex(zab);
+        expected.addVertex(zac);
+        expected.addVertex(zabc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), za);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+
+        expected.addEdge(za, zab);
+        expected.addEdge(za, zac);
+        expected.addEdge(zc, zac);
+        expected.addEdge(zac, zabc);
+        expected.addEdge(zab, zabc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    @Test
+    public void testChain3() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 6.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(5, 0), 6.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(15, 0), 6.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Build expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone za = new ConcreteZone(ca);
+        ConcreteZone zb = new ConcreteZone(cb);
+        ConcreteZone zc = new ConcreteZone(cc);
+
+        ConcreteZone zab = new ConcreteZone(ca, cb);
+        ConcreteZone zbc = new ConcreteZone(cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(za);
+        expected.addVertex(zb);
+        expected.addVertex(zc);
+        expected.addVertex(zab);
+        expected.addVertex(zbc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), za);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zb);
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+
+        expected.addEdge(za, zab);
+        expected.addEdge(zb, zab);
+        expected.addEdge(zb, zbc);
+        expected.addEdge(zc, zbc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
         assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
     }
 
@@ -221,7 +399,7 @@ public class TestConcreteDiagram {
             boolean thisEdgeInBoth = false;
             ConcreteZone source = g1.getEdgeSource(g1e);
             ConcreteZone target = g1.getEdgeTarget(g1e);
-            
+
             // I have not found g1e in g2.
             if(! g2.containsEdge(source, target)) {
                 return false;
