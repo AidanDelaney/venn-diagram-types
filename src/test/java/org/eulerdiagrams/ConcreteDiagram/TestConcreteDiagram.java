@@ -91,6 +91,70 @@ public class TestConcreteDiagram {
     }
 
     @Test
+    public void testVenn2Contained() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 12.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(5, 0), 12.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(0, 0), 100.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Construct expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone zc = new ConcreteZone(cc);
+        ConcreteZone zac = new ConcreteZone(ca, cc);
+        ConcreteZone zbc = new ConcreteZone(cb, cc);
+        ConcreteZone zabc = new ConcreteZone(ca, cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(zc);
+        expected.addVertex(zac);
+        expected.addVertex(zbc);
+        expected.addVertex(zabc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+
+        expected.addEdge(zc, zac);
+
+        expected.addEdge(zc, zbc);
+
+        expected.addEdge(zac, zabc);
+        expected.addEdge(zbc, zabc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    @Test
+    public void testConcurrentContained() {
+        Vector<ConcreteCircle> circles = new Vector();
+        ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 12.0);
+        ConcreteCircle cb = new ConcreteCircle(b, new Point2D(-5, 0), 12.0);
+        ConcreteCircle cc = new ConcreteCircle(c, new Point2D(0, 0), 100.0);
+        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+
+        ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        // Construct expected
+        DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
+
+        ConcreteZone zc = new ConcreteZone(cc);
+        ConcreteZone zabc = new ConcreteZone(ca, cb, cc);
+
+        expected.addVertex(ConcreteZone.Top.getInstance());
+        expected.addVertex(zc);
+        expected.addVertex(zabc);
+
+        expected.addEdge(ConcreteZone.Top.getInstance(), zc);
+        expected.addEdge(zc, zabc);
+
+        logger.info("expected: " + expected.toString() + " actual: " + getContainmentHeirarchy(d).toString());
+        assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    @Test
     public void testVenn3() {
         Vector<ConcreteCircle> circles = new Vector();
         ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 12.0);
