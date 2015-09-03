@@ -87,12 +87,23 @@ public class TestUtils {
         CircleArc2D arc = oarc.get();
 
         Collection<Point2D> ixs = oixs.get();
-        ixs.remove(ipoint);
 
-        Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> a  = Utils.next(curve1, curve2, new Vector<CircleArc2D>(), ipoint);
+        Vector<CircleArc2D> visited = new Vector<CircleArc2D>();
+        Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> a  = Utils.next(curve1, curve2, visited, ipoint);
         assertThat(a.car, is(not(Optional.empty())));
         assertThat(a.cdr, is(not(Optional.empty())));
 
+        visited.add(a.cdr.get());
+
+        a = Utils.next(curve1, curve2, visited, a.cdr.get().lastPoint());
+        assertThat(a.car, is(not(Optional.empty())));
+        assertThat(a.cdr, is(not(Optional.empty())));
+
+        visited.add(a.cdr.get());
+
+        a = Utils.next(curve1, curve2, visited, a.cdr.get().lastPoint());
+        assertThat(a.car, is(Optional.empty()));
+        assertThat(a.cdr, is(Optional.empty()));
     }
 
     @Test

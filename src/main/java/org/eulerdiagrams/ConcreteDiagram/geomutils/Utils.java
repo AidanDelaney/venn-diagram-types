@@ -11,6 +11,7 @@ import math.geom2d.Shape2D;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Utils {
     public static Optional<Pair<ConcreteZone, ConcreteZone>> intersects(BoundaryPolyCurve2D<CircleArc2D> arclist, Circle2D circle) {
@@ -175,6 +176,23 @@ public class Utils {
         return Optional.of(intersection);
     }
 
+    /**
+     * Find the set of arcs that are incident to a point.  Either they start on the point or end on the point.
+     * @param boundary1
+     * @param boundary2
+     * @param point
+     * @return
+     */
+    private static Set<CircleArc2D> findAdjacentArcs(BoundaryPolyCurve2D<CircleArc2D> boundary1, BoundaryPolyCurve2D<CircleArc2D> boundary2, Point2D point) {
+        // The predicate expressing incidence is (x -> x.firstPoint()..almostEquals(point, Shape2D.ACCURACY) || x.lastPoint()..almostEquals(point, Shape2D.ACCURACY))
+        Set<CircleArc2D> adjacentb1 = boundary1.curves().stream().filter(x -> x.firstPoint().almostEquals(point, Shape2D.ACCURACY) || x.lastPoint().almostEquals(point, Shape2D.ACCURACY)).collect(Collectors.toSet());
+        Set<CircleArc2D> adjacentb2 = boundary2.curves().stream().filter(x -> x.firstPoint().almostEquals(point, Shape2D.ACCURACY) || x.lastPoint().almostEquals(point, Shape2D.ACCURACY)).collect(Collectors.toSet());
+        
+        Set<CircleArc2D> union = adjacentb1;
+        union.addAll(adjacentb2);
+        return union;
+    }
+
     private static BoundaryPolyCurve2D<CircleArc2D> toggle(BoundaryPolyCurve2D<CircleArc2D> curve, BoundaryPolyCurve2D<CircleArc2D> option1, BoundaryPolyCurve2D<CircleArc2D> option2) {
         if(curve == option1) {
             return option2;
@@ -186,8 +204,11 @@ public class Utils {
         // Represent the arc as three points
         Point2D start = arc.firstPoint(), last = arc.lastPoint(), mid = arc.point(0.5);
 
-        // now check that each is within boundary
-        return boundary.isInside(start) && boundary.isInside(last) && boundary.isInside(mid);
+        // now check that each is within or on the boundary
+        boolean s = boundary.isInside(start) || boundary.contains(start);
+        boolean m = boundary.isInside(mid) || boundary.contains(mid);
+        boolean l = boundary.isInside(last) || boundary.contains(last);
+        return s && m && l;
     }
 
     /**
@@ -209,23 +230,20 @@ public class Utils {
     /**
      * Next implements a restricted DFS on the input "graph".  We find an arc that (a) is connected to the last seen arc
      * and (b) is within the boundaries of both BoundaryPolyCurve2D.  We then return both the newly seen arc and a new arc
-     * that is the same as the newly seen arc, but is in the same direction as the arc at the top of the stack.
+     * that is the same as the newly seen arc, but is in the same direction as the arc at the top of the stack.  It's expected
+     * that the caller wants to add the second of this pair to the collection of visited arcs.
      * @return
      */
     protected static Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> next(BoundaryPolyCurve2D<CircleArc2D> boundary1, BoundaryPolyCurve2D<CircleArc2D> boundary2, Collection<CircleArc2D> visited, Point2D mark) {
 
-        // From point, there is (at most) one option from boundary1 and one option from boudary2.  Only one of these
-        // options is contained in both boundaries.  Return it.
+        Set<CircleArc2D> incident = findAdjacentArcs(boundary1, boundary2, mark);
+        // filter out those arcs not in the intersection
+        incident = incident.stream().filter(x -> contains(boundary1, x) && contains(boundary2, x)).collect(Collectors.toSet());
+        // filter out those arcs that have been visited
+        incident = incident.stream().filter(x -> !visited.contains(x)).collect(Collectors.toSet());
+        // Now, incident contains 0 or 1 contours, or in the initial case were visited is empty, may contain 2 contours.
 
-        Optional<CircleArc2D> b1arc = directionlessFind(boundary1, visited, mark);
-        Optional<CircleArc2D> b2arc = directionlessFind(boundary2, visited, mark);
-
-        Optional<CircleArc2D> retVal = Optional.empty();
-        if (b1arc.isPresent() && contains(boundary1, b1arc.get()) && contains(boundary2, b1arc.get())) {
-            retVal=b1arc;
-        } else if (b2arc.isPresent() && contains(boundary2, b1arc.get()) && contains(boundary2, b1arc.get())) {
-            retVal=b2arc;
-        }
+        Optional<CircleArc2D> retVal = incident.stream().findFirst();
 
         // make a copy of the arc
         Optional<CircleArc2D> visitMark = Optional.empty();
@@ -234,7 +252,8 @@ public class Utils {
         }
 
         // make the arc retVal start at mark
-        if(retVal.isPresent() && retVal.get().firstPoint() != mark) {
+        if(retVal.isPresent() && !retVal.get().firstPoint().almostEquals(mark, Shape2D.ACCURACY)) {
+            // FIXME: slight worry that this might introduce discontinuity <= ACCURACY
             retVal = Optional.of(retVal.get().reverse());
         }
         return new Pair<Optional<CircleArc2D>, Optional<CircleArc2D>>(retVal, visitMark);
