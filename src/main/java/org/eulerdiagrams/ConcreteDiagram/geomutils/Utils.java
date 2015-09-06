@@ -162,15 +162,13 @@ public class Utils {
         }
 
         // Now either p1[i+1] or p1[i-1] are contained in p2.  "Follow" whichever one is, until we get to an arc that
-        // ends on any intersection point from ixs.  Essentially, trace around the curve boundary until you come to the
-        // next intersection point, then make the decision as to which next arc to follow.
-        Collection<CircleArc2D> visited = new Vector<>();
+        // ends on any intersection point from ixs.
+        // Keep track of both 
         BoundaryPolyCurve2D<CircleArc2D> intersection = new BoundaryPolyCurve2D<>();
-        Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> next = next(p1, p2, visited, p);
-        while (next.car.isPresent()) {
-            visited.add(next.cdr.get());
-            intersection.add(next.car.get());
-            next = next(p1, p2, visited, next.car.get().lastPoint());
+        Optional<CircleArc2D> next = next(p1, p2, intersection, p);
+        while (next.isPresent()) {
+            intersection.add(next.get());
+            next = next(p1, p2, intersection, next.get().lastPoint());
         }
 
         return Optional.of(intersection);
@@ -199,10 +197,15 @@ public class Utils {
         }
         return option1;
     }
+    
+    protected static Point2D midpoint(CircleArc2D arc) {
+        double angle = arc.getAngleExtent() / 2.0;
+        return arc.point(angle);
+    }
 
     protected static boolean contains(BoundaryPolyCurve2D<CircleArc2D> boundary, CircleArc2D arc) {
         // Represent the arc as three points
-        Point2D start = arc.firstPoint(), last = arc.lastPoint(), mid = arc.point(0.5);
+        Point2D start = arc.firstPoint(), last = arc.lastPoint(), mid = midpoint(arc);
 
         // now check that each is within or on the boundary
         boolean s = boundary.isInside(start) || boundary.contains(start);
@@ -227,6 +230,15 @@ public class Utils {
         return Optional.empty();
     }
 
+    protected static boolean directionlessContains(Iterable<CircleArc2D> arcs, CircleArc2D arc) {
+        for(CircleArc2D a: arcs) {
+            if(a.almostEquals(arc, Shape2D.ACCURACY) || a.reverse().almostEquals(arc, Shape2D.ACCURACY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Next implements a restricted DFS on the input "graph".  We find an arc that (a) is connected to the last seen arc
      * and (b) is within the boundaries of both BoundaryPolyCurve2D.  We then return both the newly seen arc and a new arc
@@ -234,29 +246,25 @@ public class Utils {
      * that the caller wants to add the second of this pair to the collection of visited arcs.
      * @return
      */
-    protected static Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> next(BoundaryPolyCurve2D<CircleArc2D> boundary1, BoundaryPolyCurve2D<CircleArc2D> boundary2, Collection<CircleArc2D> visited, Point2D mark) {
+    protected static Optional<CircleArc2D> next(BoundaryPolyCurve2D<CircleArc2D> boundary1, BoundaryPolyCurve2D<CircleArc2D> boundary2, Iterable<CircleArc2D> visited, Point2D mark) {
 
         Set<CircleArc2D> incident = findAdjacentArcs(boundary1, boundary2, mark);
         // filter out those arcs not in the intersection
         incident = incident.stream().filter(x -> contains(boundary1, x) && contains(boundary2, x)).collect(Collectors.toSet());
         // filter out those arcs that have been visited
-        incident = incident.stream().filter(x -> !visited.contains(x)).collect(Collectors.toSet());
+        incident = incident.stream().filter(x -> !directionlessContains(visited, x)).collect(Collectors.toSet());
         // Now, incident contains 0 or 1 contours, or in the initial case were visited is empty, may contain 2 contours.
 
         Optional<CircleArc2D> retVal = incident.stream().findFirst();
 
-        // make a copy of the arc
-        Optional<CircleArc2D> visitMark = Optional.empty();
+        // push the marker along the boundary
         if(retVal.isPresent()) {
-            visitMark = Optional.of(new CircleArc2D(retVal.get().supportingCircle(), retVal.get().getStartAngle(), retVal.get().getAngleExtent()));
+            if(!retVal.get().firstPoint().almostEquals(mark, Shape2D.ACCURACY)) {
+                retVal = Optional.of(retVal.get().reverse());
+            }
         }
 
-        // make the arc retVal start at mark
-        if(retVal.isPresent() && !retVal.get().firstPoint().almostEquals(mark, Shape2D.ACCURACY)) {
-            // FIXME: slight worry that this might introduce discontinuity <= ACCURACY
-            retVal = Optional.of(retVal.get().reverse());
-        }
-        return new Pair<Optional<CircleArc2D>, Optional<CircleArc2D>>(retVal, visitMark);
+        return retVal;
     }
 
     /**
@@ -275,11 +283,12 @@ public class Utils {
                 // split arc
                 CircleArc2D a1, a2;
                 a1 = arc.subCurve(0, arcPos);
-                a2 = arc.subCurve(arcPos, 1);
+                a2 = arc.subCurve(arcPos, arc.getAngleExtent());
                 rval.add(a1);
                 rval.add(a2);
             } else {
-                rval.add(arc);
+                // copy the arc
+                rval.add(new CircleArc2D(arc.supportingCircle().center(), arc.supportingCircle().radius(), arc.getStartAngle(), arc.getAngleExtent()));
             }
         }
 

@@ -1,11 +1,19 @@
 package org.eulerdiagrams.ConcreteDiagram.geomutils;
 
 import math.geom2d.Point2D;
+import math.geom2d.Shape2D;
 import math.geom2d.conic.Circle2D;
 import math.geom2d.conic.CircleArc2D;
 import math.geom2d.domain.BoundaryPolyCurve2D;
 import org.junit.Test;
 
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.batik.dom.GenericDOMImplementation;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.DOMImplementation;
+
+import java.io.*;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Vector;
@@ -36,8 +44,8 @@ public class TestUtils {
         Circle2D c1 = new Circle2D(0, 0, 10);
         Circle2D c2 = new Circle2D(5, 0, 10);
 
-        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
-        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI); // a semi-circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI); // a semi-circle
 
         BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>(), curve2 = new BoundaryPolyCurve2D<>();
         curve1.add(ca1);
@@ -48,22 +56,55 @@ public class TestUtils {
         Optional<Collection<Point2D>> ixs = ca1.intersections(ca2);
 
         assertThat(ixs, is(not(Optional.empty())));
-        assertThat(ixs.get().size(), is(2));
+        assertThat(ixs.get().size(), is(1));
 
         Point2D ipoint = ixs.get().toArray(new Point2D[0])[0]; // first intersection point
 
         curve1 = Utils.split(curve1, ipoint);
+        curve2 = Utils.split(curve2, ipoint);
         assertThat(curve1.curves().size(), is(2));
+        assertThat(curve1.firstCurve().lastPoint().almostEquals(curve1.lastCurve().firstPoint(), Shape2D.ACCURACY), is(true));
+
+        assertThat(curve2.curves().size(), is(2));
+        assertThat(curve2.firstCurve().lastPoint().almostEquals(curve2.lastCurve().firstPoint(), Shape2D.ACCURACY), is(true));
+
+        // Get a DOMImplementation
+        DOMImplementation domImpl =
+            GenericDOMImplementation.getDOMImplementation();
+        String svgNamespaceURI = "http://www.w3.org/2000/svg";
+
+        // Create an instance of org.w3c.dom.Document
+        Document document = domImpl.createDocument(svgNamespaceURI, "svg", null);
+
+        // Create an instance of the SVG Generator
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
+        // We don't do curve1.draw(svgGenerator); as we want to see each arc.
+        for(CircleArc2D c: curve1.curves()) {
+            c.draw(svgGenerator);
+        }
+
+        
+        try {
+            String filename = "TestUtils::testSplit.svg";
+            File f = new File(filename);
+            svgGenerator.stream(filename);
+        } catch (Exception e) {
+            // Do nothing
+            e.printStackTrace();
+            fail();
+        }
     }
 
     @Test
     public void testNext () {
-        Circle2D c1 = new Circle2D(0, 0, 10);
-        Circle2D c2 = new Circle2D(5, 0, 10);
+        Circle2D c1 = new Circle2D(0, 0, 100);
+        Circle2D c2 = new Circle2D(50, 0, 100);
 
         CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
         CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
 
+        
         BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>(), curve2 = new BoundaryPolyCurve2D<>();
         curve1.add(ca1);
         curve2.add(ca2);
@@ -88,22 +129,46 @@ public class TestUtils {
 
         Collection<Point2D> ixs = oixs.get();
 
-        Vector<CircleArc2D> visited = new Vector<CircleArc2D>();
-        Pair<Optional<CircleArc2D>, Optional<CircleArc2D>> a  = Utils.next(curve1, curve2, visited, ipoint);
-        assertThat(a.car, is(not(Optional.empty())));
-        assertThat(a.cdr, is(not(Optional.empty())));
+        BoundaryPolyCurve2D<CircleArc2D> visited = new BoundaryPolyCurve2D<CircleArc2D>();
+        Optional<CircleArc2D> a  = Utils.next(curve1, curve2, visited, ipoint);
+        assertThat(a, is(not(Optional.empty())));
 
-        visited.add(a.cdr.get());
+        visited.add(a.get());
 
-        a = Utils.next(curve1, curve2, visited, a.cdr.get().lastPoint());
-        assertThat(a.car, is(not(Optional.empty())));
-        assertThat(a.cdr, is(not(Optional.empty())));
+        a = Utils.next(curve1, curve2, visited, a.get().lastPoint());
+        assertThat(a, is(not(Optional.empty())));
 
-        visited.add(a.cdr.get());
+        visited.add(a.get());
 
-        a = Utils.next(curve1, curve2, visited, a.cdr.get().lastPoint());
-        assertThat(a.car, is(Optional.empty()));
-        assertThat(a.cdr, is(Optional.empty()));
+        a = Utils.next(curve1, curve2, visited, a.get().lastPoint());
+        assertThat(a, is(not(Optional.empty())));
+        visited.add(a.get());
+
+        a = Utils.next(curve1, curve2, visited, a.get().lastPoint());
+        assertThat(a, is(Optional.empty()));
+
+        // Get a DOMImplementation
+        DOMImplementation domImpl =
+            GenericDOMImplementation.getDOMImplementation();
+        String svgNamespaceURI = "http://www.w3.org/2000/svg";
+
+        // Create an instance of org.w3c.dom.Document
+        Document document = domImpl.createDocument(svgNamespaceURI, "svg", null);
+
+        // Create an instance of the SVG Generator
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+        visited.draw(svgGenerator);
+
+        
+        try {
+            String filename = "TestUtils::testNext.svg";
+            File f = new File(filename);
+            svgGenerator.stream(filename);
+        } catch (Exception e) {
+            // Do nothing
+            e.printStackTrace();
+            fail();
+        }
     }
 
     @Test
