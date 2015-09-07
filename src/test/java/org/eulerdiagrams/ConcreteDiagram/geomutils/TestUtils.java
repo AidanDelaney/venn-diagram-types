@@ -13,9 +13,11 @@ import org.apache.batik.dom.GenericDOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DOMImplementation;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Vector;
 
 import static org.junit.Assert.*;
@@ -97,7 +99,7 @@ public class TestUtils {
     }
 
     @Test
-    public void testNext () {
+    public void testVenn2Next () {
         Circle2D c1 = new Circle2D(0, 0, 100);
         Circle2D c2 = new Circle2D(50, 0, 100);
 
@@ -161,7 +163,107 @@ public class TestUtils {
 
         
         try {
-            String filename = "TestUtils::testNext.svg";
+            String filename = "TestUtils::testVenn2Next.svg";
+            File f = new File(filename);
+            svgGenerator.stream(filename);
+        } catch (Exception e) {
+            // Do nothing
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testVenn3Next () {
+        Circle2D c1 = new Circle2D(0, 0, 100);
+        Circle2D c2 = new Circle2D(50, 0, 100);
+        Circle2D c3 = new Circle2D(0, 50, 100);
+
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca3 = new CircleArc2D(c3, 0, Math.PI * 2); // a full circle
+
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>()
+                , curve2 = new BoundaryPolyCurve2D<>()
+                , curve3 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+        curve3.add(ca3);
+
+        assertThat(curve1.contains(ca1), is(true));
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+        Optional<Collection<Point2D>> oixs13 = ca1.intersections(ca3);
+        Optional<Collection<Point2D>> oixs23 = ca2.intersections(ca3);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+        for(Point2D p : oixs13.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve3 = Utils.split(curve3, p);
+        }
+        for(Point2D p : oixs23.get()) {
+            curve2 = Utils.split(curve2, p);
+            curve3 = Utils.split(curve3, p);
+        }
+        assertThat(curve1.curves().size(), is(5));
+        assertThat(curve2.curves().size(), is(5));
+        assertThat(curve3.curves().size(), is(5));
+
+        Point2D ipoint = oixs12.get().toArray(new Point2D[0])[0];
+
+        // Find arc on curve 1 that contains ipoint
+        Optional<CircleArc2D> oarc = Utils.findArcContaining(curve1, ipoint);
+        assertThat(oarc, is(not(Optional.empty())));
+        CircleArc2D arc = oarc.get();
+
+        Collection<BoundaryPolyCurve2D<CircleArc2D>> boundaries = new Vector<>();
+        boundaries.add(curve1);
+        boundaries.add(curve2);
+        boundaries.add(curve3);
+
+        BoundaryPolyCurve2D<CircleArc2D> visited = new BoundaryPolyCurve2D<CircleArc2D>();
+        Optional<CircleArc2D> a = Utils.next(boundaries, visited, ipoint);
+        while(a.isPresent()) {
+            visited.add(a.get());
+            a = Utils.next(boundaries, visited, ipoint);
+        }
+
+        // Get a DOMImplementation
+        DOMImplementation domImpl =
+            GenericDOMImplementation.getDOMImplementation();
+        String svgNamespaceURI = "http://www.w3.org/2000/svg";
+
+        // Create an instance of org.w3c.dom.Document
+        Document document = domImpl.createDocument(svgNamespaceURI, "svg", null);
+
+        // Create an instance of the SVG Generator
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+        
+        Vector<BoundaryPolyCurve2D<CircleArc2D>> outBoundaries = new Vector<>();
+        //BoundaryPolyCurve2D<CircleArc2D> arcs = Utils.intersection(boundaries, outBoundaries);
+        boundaries.remove(curve1);
+        outBoundaries.add(curve1);
+        BoundaryPolyCurve2D<CircleArc2D> arcsC2C3 = Utils.intersection(boundaries, outBoundaries);
+
+        svgGenerator.setColor(new Color(255, 255, 0));
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+        curve3.draw(svgGenerator);
+        //for(CircleArc2D c : arcs) {
+            //c.draw(svgGenerator);
+        //}
+        for(CircleArc2D c : arcsC2C3) {
+            svgGenerator.setColor(new Color(255, 0, 0));
+            c.draw(svgGenerator);
+        }
+
+        
+        try {
+            String filename = "TestUtils::testVenn3Next.svg";
             File f = new File(filename);
             svgGenerator.stream(filename);
         } catch (Exception e) {
