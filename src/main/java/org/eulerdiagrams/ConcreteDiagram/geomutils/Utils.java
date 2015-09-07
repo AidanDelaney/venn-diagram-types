@@ -11,7 +11,6 @@ import org.eulerdiagrams.ConcreteDiagram.ConcreteZone;
 import math.geom2d.Point2D;
 import math.geom2d.Shape2D;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,22 +49,6 @@ public class Utils {
         public int compare(CircleArc2D ca1, CircleArc2D ca2) {
             double angle1 = Math.atan2(ca1.point(0).y() - centroid.y(), ca1.point(0).x() - centroid.x());
             double angle2 = Math.atan2(ca2.point(0).y() - centroid.y(), ca2.point(0).x() - centroid.x());
-
-            if(angle1 < angle2) return 1;
-            else if (angle2 > angle1) return -1;
-            return 0;
-        }
-    }
-
-    public static class CCWWingedIntersectionComparitor implements Comparator<WingedIntersection> {
-        private Point2D centroid;
-        public CCWWingedIntersectionComparitor(Point2D centroid) {
-            this.centroid = centroid;
-        }
-
-        public int compare(WingedIntersection p1, WingedIntersection p2) {
-            double angle1 = Math.atan2(p1.getIntersectionPoint().y() - centroid.y(), p1.getIntersectionPoint().x() - centroid.x());
-            double angle2 = Math.atan2(p2.getIntersectionPoint().y() - centroid.y(), p2.getIntersectionPoint().x() - centroid.x());
 
             if(angle1 < angle2) return 1;
             else if (angle2 > angle1) return -1;
