@@ -115,7 +115,7 @@ public class TestUtils {
                                                      , outBoundaries = Arrays.<BoundaryPolyCurve2D<CircleArc2D>>asList();
         BoundaryPolyCurve2D<CircleArc2D> intersection = Utils.intersection(inBoundaries
                                                                      , outBoundaries);
-        assertThat(Utils.area(intersection, Arrays.asList()), is(0));
+        assertThat(Utils.area(intersection, Arrays.asList()), is(0.0));
     }
 
     @Test
@@ -237,7 +237,150 @@ public class TestUtils {
         
         svgWriter.writeSVG();
     }
-    
+
+    @Test
+    public void testTunnel() {
+        Circle2D c1 = new Circle2D(0, 0, 50);
+        Circle2D c2 = new Circle2D(0, 0, 10);
+
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+
+        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+                                                     , outBoundaries = new Vector<>();
+        inBoundaries.add(curve1);
+        outBoundaries.add(curve2);
+
+        BoundaryPolyCurve2D<CircleArc2D> arcs = Utils.intersection(inBoundaries, outBoundaries);
+
+        SVGWriter svgWriter = new SVGWriter("TestUtils::testTunnel.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        arcs.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+    }
+
+    @Test
+    public void testComplexZone1() {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        Circle2D c3 = new Circle2D(5, 0, 10);
+
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca3 = new CircleArc2D(c3, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>()
+                                         , curve3 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+        curve3.add(ca3);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+        Optional<Collection<Point2D>> oixs13 = ca1.intersections(ca3);
+        Optional<Collection<Point2D>> oixs23 = ca2.intersections(ca3);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+        for(Point2D p : oixs13.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve3 = Utils.split(curve3, p);
+        }
+        for(Point2D p : oixs23.get()) {
+            curve2 = Utils.split(curve2, p);
+            curve3 = Utils.split(curve3, p);
+        }
+
+        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+                                                     , outBoundaries = new Vector<>();
+        inBoundaries.add(curve2);
+        outBoundaries.add(curve1);
+        outBoundaries.add(curve3);
+
+        BoundaryPolyCurve2D<CircleArc2D> arcs = Utils.intersection(inBoundaries, outBoundaries);
+
+        SVGWriter svgWriter = new SVGWriter("TestUtils::testComplexZone1.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+        curve3.draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        arcs.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+    }
+
+    @Test
+    public void testComplexZone2() {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        Circle2D c3 = new Circle2D(8, 0, 10);
+
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca3 = new CircleArc2D(c3, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>()
+                                         , curve3 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+        curve3.add(ca3);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+        Optional<Collection<Point2D>> oixs13 = ca1.intersections(ca3);
+        Optional<Collection<Point2D>> oixs23 = ca2.intersections(ca3);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+        for(Point2D p : oixs13.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve3 = Utils.split(curve3, p);
+        }
+        for(Point2D p : oixs23.get()) {
+            curve2 = Utils.split(curve2, p);
+            curve3 = Utils.split(curve3, p);
+        }
+
+        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+                                                     , outBoundaries = new Vector<>();
+        inBoundaries.add(curve2);
+        outBoundaries.add(curve1);
+        outBoundaries.add(curve3);
+
+        BoundaryPolyCurve2D<CircleArc2D> arcs = Utils.intersection(inBoundaries, outBoundaries);
+
+        SVGWriter svgWriter = new SVGWriter("TestUtils::testComplexZone2.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+        curve3.draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        arcs.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+        fail();
+    }
+
     @Test
     public void testDisconnected() {
         Circle2D c1 = new Circle2D(-45, 0, 50);
@@ -254,6 +397,23 @@ public class TestUtils {
         curve1.add(ca1);
         curve2.add(ca2);
         curve3.add(ca3);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+        Optional<Collection<Point2D>> oixs13 = ca1.intersections(ca3);
+        Optional<Collection<Point2D>> oixs23 = ca2.intersections(ca3);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+        for(Point2D p : oixs13.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve3 = Utils.split(curve3, p);
+        }
+        for(Point2D p : oixs23.get()) {
+            curve2 = Utils.split(curve2, p);
+            curve3 = Utils.split(curve3, p);
+        }
 
         Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
                                                      , outBoundaries = new Vector<>();
@@ -273,6 +433,7 @@ public class TestUtils {
         arcs.draw(svgGenerator);
 
         svgWriter.writeSVG();
+        fail();
     }
 
     @Test
@@ -303,5 +464,32 @@ public class TestUtils {
         Optional<CircleArc2D> oc = Utils.directionlessFind(curve1, new Vector<CircleArc2D>(), ipoint);
 
         assertThat(oc.isPresent(), is(true));
+    }
+
+    @Test
+    public void testSimpleUnion () {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+
+        BoundaryPolyCurve2D<CircleArc2D> union = Utils.union(curve1, curve2);
+        SVGWriter svgWriter = new SVGWriter("TestUtils::testSimpleUnion.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        union.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+        fail();
     }
 }

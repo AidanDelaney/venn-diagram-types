@@ -10,6 +10,7 @@ import org.eulerdiagrams.ConcreteDiagram.ConcreteZone;
 
 import math.geom2d.Point2D;
 import math.geom2d.Shape2D;
+import math.geom2d.Vector2D;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,8 +40,12 @@ public class Utils {
         }
 
         public int compare(CircleArc2D ca1, CircleArc2D ca2) {
-            double angle1 = Math.atan2(ca1.point(0).y() - centroid.y(), ca1.point(0).x() - centroid.x());
-            double angle2 = Math.atan2(ca2.point(0).y() - centroid.y(), ca2.point(0).x() - centroid.x());
+            Vector2D v1 = new Vector2D(centroid, midpoint(ca1));
+            Vector2D v2 = new Vector2D(centroid, midpoint(ca2));
+            Vector2D xAxis = new Vector2D(new Point2D(0,0), new Point2D(1, 0));
+
+            double angle1 = Math.acos(xAxis.dot(v1));
+            double angle2 = Math.acos(xAxis.dot(v2));
 
             if(angle1 < angle2) return 1;
             else if (angle2 > angle1) return -1;
@@ -179,6 +184,71 @@ public class Utils {
         return ex;
     }
 
+    protected static Collection<List<BoundaryPolyCurve2D<CircleArc2D>>> clusters(Collection<BoundaryPolyCurve2D<CircleArc2D>> boundaries) {
+        if(boundaries.isEmpty()) {
+            return new Vector<>();
+        }
+        
+        // This is horrible, a 2D Vector of stuff.
+        // -  We're looking for clusters of things that intersect with each other.
+        Collection<List<BoundaryPolyCurve2D<CircleArc2D>>> clusters = new Vector<>();
+        List<BoundaryPolyCurve2D<CircleArc2D>> first = new Vector<>();
+        first.add(boundaries.stream().findFirst().get());
+        clusters.add(first);
+
+        nextBoundary: for(BoundaryPolyCurve2D<CircleArc2D> boundary: boundaries) {
+            for(Collection<BoundaryPolyCurve2D<CircleArc2D>> cluster: clusters) {
+                for(BoundaryPolyCurve2D<CircleArc2D> contour: cluster) {
+                    if(nonTangentalIntersections(contour, boundary).isPresent()) {
+                        cluster.add(contour);
+                        continue nextBoundary;
+                    }
+                }
+            }
+        }
+        
+        return clusters;
+    }
+
+    protected static BoundaryPolyCurve2D<CircleArc2D> union(BoundaryPolyCurve2D<CircleArc2D> boundary1, BoundaryPolyCurve2D<CircleArc2D> boundary2) {
+        Optional<Collection<Point2D>> ixs = nonTangentalIntersections(boundary1, boundary2);
+        if(!ixs.isPresent()) {
+            return boundary1;
+        }
+
+        // Remove any curve that is within both contours
+        Collection<CircleArc2D> union = boundary1.curves();
+        union.addAll(boundary2.curves());
+        
+        Collection<CircleArc2D> intersection = intersection(Arrays.asList(boundary1, boundary2));
+        union.removeAll(intersection);
+        
+        return fromCollection(union);
+    }
+
+    protected static Collection<BoundaryPolyCurve2D<CircleArc2D>> union(Collection<BoundaryPolyCurve2D<CircleArc2D>> boundaries) {
+        if(boundaries.isEmpty()) {
+            return new Vector<>();
+        }
+        Collection<List<BoundaryPolyCurve2D<CircleArc2D>>> clusters = clusters(boundaries);
+
+        // Now reduce each cluster in turn
+        Collection<BoundaryPolyCurve2D<CircleArc2D>> hulls = new Vector<>();
+        for(List<BoundaryPolyCurve2D<CircleArc2D>> cluster: clusters) {
+            if(1 == cluster.size()) {
+                hulls.add(cluster.stream().findFirst().get());
+            }  else {
+                BoundaryPolyCurve2D<CircleArc2D> hull = cluster.stream().findFirst().get();
+                for(BoundaryPolyCurve2D<CircleArc2D> b: cluster.subList(2, cluster.size())) {
+                    hull = union(hull, b);
+                }
+                hulls.add(hull);
+            }
+        }
+        
+        return hulls;
+    }
+
     protected static Collection<CircleArc2D> intersection(Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries) {
         final Set<CircleArc2D> iarcs = new HashSet<>();
         inBoundaries.forEach(b -> iarcs.addAll(b.curves()));
@@ -238,7 +308,7 @@ public class Utils {
         Collection<Point2D> ixs = new Vector<Point2D>();
         for(CircleArc2D a1 : pc1) {
             for(CircleArc2D a2 : pc2) {
-                Optional<Collection<Point2D>> is = a1.nonTangentalIntersections(a2);
+                Optional<Collection<Point2D>> is = nonTangentalIntersections(a1, a2);
                 if(is.isPresent()) {
                     ixs.addAll(is.get());
                 }
@@ -250,5 +320,19 @@ public class Utils {
         }
 
         return Optional.of(ixs);
+    }
+    
+    public static Optional<Collection<Point2D>> nonTangentalIntersections (CircleArc2D c, CircleArc2D ca) {
+        Optional<Collection<Point2D>> ixs = c.intersections(ca);
+        if(ixs.isPresent()) {
+
+            // A point is a tangent point if the tangents of this arc and ca (at point p) are parallel.  They're
+            // parallel if tangent1 \times tangent2 is 0
+            Collection<Point2D> cleaned = ixs.get().stream()
+                    .filter(p -> 0.0 != c.tangent(c.position(p)).cross(ca.tangent(ca.position(p))))
+                    .collect(Collectors.toList());
+            return Optional.of(cleaned);
+        }
+        return ixs;
     }
 }

@@ -69,13 +69,13 @@ public class TestConcreteDiagram {
 
         AbstractContour aa = new AbstractContour("a");
         ConcreteCircle ca = new ConcreteCircle(aa, new Point2D(-5, 0), 7);
-        ConcreteZone zca = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{ca}));
+        ConcreteZone zca = new ConcreteZone(ca);
 
         AbstractContour ab = new AbstractContour("b");
         ConcreteCircle cb = new ConcreteCircle(ab, new Point2D(5, 0), 7);
-        ConcreteZone zcb = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{cb}));
+        ConcreteZone zcb = new ConcreteZone(cb);
 
-        ConcreteZone zcacb = new ConcreteZone(Arrays.asList(new ConcreteCircle[]{ca, cb}));
+        ConcreteZone zcacb = new ConcreteZone(ca, cb);
 
         expected.addVertex(zca);
         expected.addVertex(zcb);
@@ -96,9 +96,11 @@ public class TestConcreteDiagram {
         ConcreteCircle ca = new ConcreteCircle(a, new Point2D(-5, 0), 12.0);
         ConcreteCircle cb = new ConcreteCircle(b, new Point2D(5, 0), 12.0);
         ConcreteCircle cc = new ConcreteCircle(c, new Point2D(0, 0), 100.0);
-        circles.addAll(Arrays.asList(new ConcreteCircle[]{ca, cb, cc}));
+        circles.addAll(Arrays.asList(ca, cb, cc));
 
         ConcreteDiagram d = new ConcreteDiagram(circles);
+
+        logger.info(getZones(d).toString());
 
         // Construct expected
         DirectedGraph<ConcreteZone, DefaultEdge> expected = new DefaultDirectedGraph<ConcreteZone, DefaultEdge>(DefaultEdge.class);
@@ -439,6 +441,20 @@ public class TestConcreteDiagram {
         expected.addEdge(ConcreteZone.Top.getInstance(), zabc);
 
         assertTrue(graphEdgeAndVertexEqualty(expected, getContainmentHeirarchy(d)));
+    }
+
+    private static List<ConcreteZone> getZones(ConcreteDiagram d) {
+        List<ConcreteZone> actual = null;
+        try {
+            Field field = ConcreteDiagram.class.getDeclaredField("zones");
+            field.setAccessible(true);
+            actual = (List<ConcreteZone>) field.get(d);
+        } catch (NoSuchFieldException nsfe) {
+            fail();
+        } catch (IllegalAccessException iae) {
+            fail();
+        }
+        return actual;
     }
 
     private static DirectedGraph<ConcreteZone, DefaultEdge> getContainmentHeirarchy(ConcreteDiagram d) {
