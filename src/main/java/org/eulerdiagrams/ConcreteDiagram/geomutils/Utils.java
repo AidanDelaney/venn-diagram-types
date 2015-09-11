@@ -217,7 +217,8 @@ public class Utils {
         }
 
         // Remove any curve that is within both contours
-        Collection<CircleArc2D> union = boundary1.curves();
+        Collection<CircleArc2D> union = new Vector<>();
+        union.addAll(boundary1.curves());
         union.addAll(boundary2.curves());
         
         Collection<CircleArc2D> intersection = intersection(Arrays.asList(boundary1, boundary2));
@@ -305,7 +306,7 @@ public class Utils {
     }
 
     protected static Optional<Collection<Point2D>> nonTangentalIntersections (BoundaryPolyCurve2D<CircleArc2D> pc1, BoundaryPolyCurve2D<CircleArc2D> pc2) {
-        Collection<Point2D> ixs = new Vector<Point2D>();
+        Collection<Point2D> ixs = new HashSet<Point2D>();
         for(CircleArc2D a1 : pc1) {
             for(CircleArc2D a2 : pc2) {
                 Optional<Collection<Point2D>> is = nonTangentalIntersections(a1, a2);

@@ -467,6 +467,33 @@ public class TestUtils {
     }
 
     @Test
+    public void testNonTangentalIntersections () {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+
+        Optional<Collection<Point2D>> oixs12 = Utils.nonTangentalIntersections(ca1, ca2);
+        assertThat(oixs12, is(not(Optional.empty())));
+        assertThat(oixs12.get().size(), is(2));
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+
+        oixs12 = Utils.nonTangentalIntersections(ca1, ca2);
+        assertThat(oixs12, is(not(Optional.empty())));
+        assertThat(oixs12.get().size(), is(2));
+    }
+
+    @Test
     public void testSimpleUnion () {
         Circle2D c1 = new Circle2D(-45, 0, 50);
         Circle2D c2 = new Circle2D(45, 0, 50);
@@ -478,6 +505,13 @@ public class TestUtils {
                                          , curve2 = new BoundaryPolyCurve2D<>();
         curve1.add(ca1);
         curve2.add(ca2);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
 
         BoundaryPolyCurve2D<CircleArc2D> union = Utils.union(curve1, curve2);
         SVGWriter svgWriter = new SVGWriter("TestUtils::testSimpleUnion.svg");
