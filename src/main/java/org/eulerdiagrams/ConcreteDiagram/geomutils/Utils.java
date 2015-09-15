@@ -126,62 +126,79 @@ public class Utils {
     }
 
     // FIXME: Does not work for disconnected zones!
-    protected static BoundaryPolyCurve2D<CircleArc2D> intersection(Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries, Collection<BoundaryPolyCurve2D<CircleArc2D>> outBoundaries) {
-        Collection<CircleArc2D> ix = intersection(inBoundaries);
+    protected static BoundaryPolyCurve2D<CircleArc2D> intersection(Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries, List<BoundaryPolyCurve2D<CircleArc2D>> outBoundaries) {
+        BoundaryPolyCurve2D<CircleArc2D> ix = intersection(inBoundaries);
 
-        ix = exclusion(fromCollection(ix), outBoundaries);
-        return fromCollection(ix);
+        ix = exclusion(ix, outBoundaries);
+
+        return ix;
     }
 
-    protected static BoundaryPolyCurve2D<CircleArc2D> fromCollection(Collection<CircleArc2D> as) {
+    protected static BoundaryPolyCurve2D<CircleArc2D> fromCollection(Collection<CircleArc2D> arcs, Optional<CircleArc2D> start) {
         BoundaryPolyCurve2D<CircleArc2D> zone = new BoundaryPolyCurve2D<>();
+        Collection<CircleArc2D> as = new Vector<>();
+        as.addAll(arcs);
         
         // Cheap(ish) assumes 'as' define a convex curve
-        Point2D centroid = getCentroid(as);
-        Collections.sort(as.stream().collect(Collectors.toList()), new CCWCircleArc2DComparitor(centroid));
-        as.forEach(a -> zone.add(a));
+        //Point2D centroid = getCentroid(as);
+        //Collections.sort(arcs.stream().collect(Collectors.toList()), new CCWCircleArc2DComparitor(centroid));
+        //arcs.forEach(a -> zone.add(a));
 
-        /*Optional<CircleArc2D> oarc = as.stream().findFirst();
-        if(!oarc.isPresent()) {
-            return zone;
-        }
-
-        if(oarc.get().curvature(0) >=0 ) { // if CCW
-            zone.add(oarc.get());
-        } else {
-            zone.add(oarc.get().reverse());
-        }
+        zone.add(start.get());
+        Optional<CircleArc2D> oarc = start;
         as.remove(oarc.get());
 
-        for(int i=0; i< as.size(); i++) {
+        final int size = as.size();
+        for(int i=0; i< size; i++) {
             oarc = directionlessFind(as, zone.lastPoint());
 
-            if(oarc.isPresent() && !oarc.get().firstPoint().almostEquals(zone.lastPoint(), Shape2D.ACCURACY)) {
+        if(oarc.isPresent()) { // we have a *major* issue if this isn't true.
+            if(oarc.get().firstPoint().almostEquals(zone.lastPoint(), Shape2D.ACCURACY)) {
                 zone.add(oarc.get());
                 as.remove(oarc.get());
-            } else if (oarc.isPresent()) {
+            } else {
                 zone.add(oarc.get().reverse());
                 as.remove(oarc.get());
             }
-        }*/
+        }
+    }
 
         return zone;
     }
-    protected static Collection<CircleArc2D> exclusion(BoundaryPolyCurve2D<CircleArc2D> inBoundary, Collection<BoundaryPolyCurve2D<CircleArc2D>> outBoundaries) {
+
+    /**
+     * Remove any curves of outBoundaries from inBoundaries.
+     * @param inBoundary
+     * @param outBoundaries
+     * @return
+     */
+    protected static BoundaryPolyCurve2D<CircleArc2D> exclusion(BoundaryPolyCurve2D<CircleArc2D> inBoundary, List<BoundaryPolyCurve2D<CircleArc2D>> outBoundaries) {
         if(outBoundaries.isEmpty()) {
-            return inBoundary.curves();
+            return inBoundary;
         }
 
         // Find those outBoundaries contained in inBoundaries
-        Collection<CircleArc2D> ex = new HashSet<>();
-        for(BoundaryPolyCurve2D<CircleArc2D> boundary: outBoundaries) {
-            ex.addAll(boundary.curves().stream().filter(x -> contains(inBoundary, x)).collect(Collectors.toSet()));
+        BoundaryPolyCurve2D<CircleArc2D> ex = exclusion(inBoundary, outBoundaries.get(0));
+        for(BoundaryPolyCurve2D<CircleArc2D> boundary: outBoundaries.subList(1, outBoundaries.size() -1)) {
+            ex = exclusion(ex, boundary);
         }
 
-        // filter out curves that are contained in an outBoundary
-        ex.addAll(inBoundary.curves().stream().filter(x -> outBoundaries.stream().noneMatch(b -> contains(b, x))).collect(Collectors.toSet()));
-        //inBoundary.forEach(c -> ex.add(c));
         return ex;
+    }
+
+    protected static BoundaryPolyCurve2D<CircleArc2D> exclusion(BoundaryPolyCurve2D<CircleArc2D> inBoundary, BoundaryPolyCurve2D<CircleArc2D> outBoundary) {
+        // Find those outBoundaries contained in inBoundaries
+        Collection<CircleArc2D> ex = new HashSet<>();
+        ex.addAll(outBoundary.curves().stream().filter(x -> contains(inBoundary, x)).collect(Collectors.toSet()));
+
+
+        // filter out curves that are contained in an outBoundary
+        Collection<CircleArc2D> ins = inBoundary.curves().stream().filter(x -> ! contains(outBoundary, x)).collect(Collectors.toSet());
+        ex.addAll(ins);
+        //inBoundary.forEach(c -> ex.add(c));
+
+        
+        return fromCollection(ex, ins.stream().findFirst());
     }
 
     protected static Collection<List<BoundaryPolyCurve2D<CircleArc2D>>> clusters(Collection<BoundaryPolyCurve2D<CircleArc2D>> boundaries) {
@@ -220,11 +237,18 @@ public class Utils {
         Collection<CircleArc2D> union = new Vector<>();
         union.addAll(boundary1.curves());
         union.addAll(boundary2.curves());
-        
-        Collection<CircleArc2D> intersection = intersection(Arrays.asList(boundary1, boundary2));
-        union.removeAll(intersection);
-        
-        return fromCollection(union);
+
+        // Union can contain either those curves in the intersection or reversedd copies of the curves.
+        BoundaryPolyCurve2D<CircleArc2D> intersection = intersection(Arrays.asList(boundary1, boundary2));
+        Collection<CircleArc2D> rintersection = new Vector<>();
+        for(CircleArc2D arc: intersection){
+            rintersection.add(arc.reverse());
+        }
+
+        union.removeAll(intersection.curves());
+        union.removeAll(rintersection);
+
+        return fromCollection(union, boundary1.curves().stream().findFirst());
     }
 
     protected static Collection<BoundaryPolyCurve2D<CircleArc2D>> union(Collection<BoundaryPolyCurve2D<CircleArc2D>> boundaries) {
@@ -250,11 +274,12 @@ public class Utils {
         return hulls;
     }
 
-    protected static Collection<CircleArc2D> intersection(Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries) {
+    protected static BoundaryPolyCurve2D<CircleArc2D> intersection(Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries) {
         final Set<CircleArc2D> iarcs = new HashSet<>();
         inBoundaries.forEach(b -> iarcs.addAll(b.curves()));
 
-        return iarcs.stream().filter(x -> inBoundaries.stream().allMatch(b -> contains(b, x))).collect(Collectors.toSet());
+        Collection<CircleArc2D> arcs = iarcs.stream().filter(x -> inBoundaries.stream().allMatch(b -> contains(b, x))).collect(Collectors.toSet());
+        return fromCollection(arcs, iarcs.stream().filter(x -> x.curvature(0) > 0).findFirst()); // get the first CCW curve
     }
 
     protected static double area (BoundaryPolyCurve2D<CircleArc2D> boundary, Collection<Circle2D> out) {

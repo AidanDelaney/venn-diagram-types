@@ -18,6 +18,7 @@ import java.awt.Graphics2D;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
@@ -111,7 +112,7 @@ public class TestUtils {
         curve1.add(ca1);
         curve2.add(ca2);
 
-        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = Arrays.<BoundaryPolyCurve2D<CircleArc2D>>asList(curve1, curve2)
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = Arrays.<BoundaryPolyCurve2D<CircleArc2D>>asList(curve1, curve2)
                                                      , outBoundaries = Arrays.<BoundaryPolyCurve2D<CircleArc2D>>asList();
         BoundaryPolyCurve2D<CircleArc2D> intersection = Utils.intersection(inBoundaries
                                                                      , outBoundaries);
@@ -251,7 +252,7 @@ public class TestUtils {
         curve1.add(ca1);
         curve2.add(ca2);
 
-        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
                                                      , outBoundaries = new Vector<>();
         inBoundaries.add(curve1);
         outBoundaries.add(curve2);
@@ -304,7 +305,7 @@ public class TestUtils {
             curve3 = Utils.split(curve3, p);
         }
 
-        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
                                                      , outBoundaries = new Vector<>();
         inBoundaries.add(curve2);
         outBoundaries.add(curve1);
@@ -354,12 +355,8 @@ public class TestUtils {
             curve1 = Utils.split(curve1, p);
             curve3 = Utils.split(curve3, p);
         }
-        for(Point2D p : oixs23.get()) {
-            curve2 = Utils.split(curve2, p);
-            curve3 = Utils.split(curve3, p);
-        }
 
-        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
                                                      , outBoundaries = new Vector<>();
         inBoundaries.add(curve2);
         outBoundaries.add(curve1);
@@ -415,7 +412,7 @@ public class TestUtils {
             curve3 = Utils.split(curve3, p);
         }
 
-        Collection<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
                                                      , outBoundaries = new Vector<>();
         inBoundaries.add(curve1);
         inBoundaries.add(curve2);
@@ -522,6 +519,85 @@ public class TestUtils {
 
         svgGenerator.setColor(new Color(255, 0, 0));
         union.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+        fail();
+    }
+
+    @Test
+    public void testFromCollection () {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+
+        BoundaryPolyCurve2D<CircleArc2D> ordered = Utils.fromCollection(curve1.curves(), Optional.of(curve1.firstCurve()));
+
+        for(int i = 0; i<curve1.size(); i++) {
+            assertThat("Difference at curve " + i, ordered.get(i), is(equalTo(curve1.get(i))));
+        }
+        fail();
+    }
+
+    @Test
+    public void testExclusion() {
+        Circle2D c1 = new Circle2D(-45, 0, 50);
+        Circle2D c2 = new Circle2D(45, 0, 50);
+        Circle2D c3 = new Circle2D(8, 0, 10);
+
+        CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca2 = new CircleArc2D(c2, 0, Math.PI * 2); // a full circle
+        CircleArc2D ca3 = new CircleArc2D(c3, 0, Math.PI * 2); // a full circle
+        
+        BoundaryPolyCurve2D<CircleArc2D> curve1 = new BoundaryPolyCurve2D<>() 
+                                         , curve2 = new BoundaryPolyCurve2D<>()
+                                         , curve3 = new BoundaryPolyCurve2D<>();
+        curve1.add(ca1);
+        curve2.add(ca2);
+        curve3.add(ca3);
+
+        Optional<Collection<Point2D>> oixs12 = ca1.intersections(ca2);
+        Optional<Collection<Point2D>> oixs13 = ca1.intersections(ca3);
+
+        for(Point2D p : oixs12.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve2 = Utils.split(curve2, p);
+        }
+        for(Point2D p : oixs13.get()) {
+            curve1 = Utils.split(curve1, p);
+            curve3 = Utils.split(curve3, p);
+        }
+
+        List<BoundaryPolyCurve2D<CircleArc2D>> inBoundaries = new Vector<>()
+                                                     , outBoundaries = new Vector<>();
+        inBoundaries.add(curve2);
+        outBoundaries.add(curve1);
+        outBoundaries.add(curve3);
+
+        BoundaryPolyCurve2D<CircleArc2D> arcs = Utils.exclusion(curve2, outBoundaries);
+
+        SVGWriter svgWriter = new SVGWriter("TestUtils::testExclusion.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        curve1.draw(svgGenerator);
+        curve2.draw(svgGenerator);
+        curve3.draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        arcs.draw(svgGenerator);
 
         svgWriter.writeSVG();
         fail();
