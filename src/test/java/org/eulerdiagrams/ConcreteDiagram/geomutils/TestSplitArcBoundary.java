@@ -54,9 +54,15 @@ public class TestSplitArcBoundary {
         sabg.draw(svgGenerator);
 
         svgGenerator.setColor(new Color(255, 0, 0));
-        Optional<SplitArcBoundary> uad = saba.union(sabd);
-        assertThat(uad, is(Optional.empty()));
+        Optional<SplitArcBoundary> uae = saba.union(sabe);
+        assertThat(uae, is(Optional.empty()));
 
+        svgGenerator.setColor(new Color(0, 255, 0));
+        Optional<SplitArcBoundary> ube = sabb.union(sabe);
+        assertThat(ube.get(), is(equalTo(sabb)));
+        ube.get().draw(svgGenerator);
+
+        svgGenerator.setColor(new Color(0, 0, 255));
         Optional<SplitArcBoundary> ucd = sabc.union(sabd);
         assertThat(ucd, is(not(Optional.empty())));
         ucd.get().draw(svgGenerator);
@@ -115,21 +121,18 @@ public class TestSplitArcBoundary {
         sabg.draw(svgGenerator);
 
         Optional<Collection<SplitArcBoundary>> lae = saba.less(sabe);
-        //assertThat(lae, is(Optional.empty()));
+        assertThat(lae, is(Optional.empty()));
 
-        // Invariant A \cup B == A\B \cup B\A
-        Optional<SplitArcBoundary> uad = saba.union(sabd);
         Optional<Collection<SplitArcBoundary>> lad = saba.less(sabd);
         Optional<Collection<SplitArcBoundary>> lda = sabd.less(saba);
         assertThat(lad, is(not(Optional.empty())));
         assertThat(lda, is(not(Optional.empty())));
         SplitArcBoundary bad = lad.get().stream().findFirst().get();
         SplitArcBoundary bda = lda.get().stream().findFirst().get();
-        //assertThat(uad.get(), is(equalTo(bad.union(bda))));
 
-        svgGenerator.setColor(new Color(255, 0, 0));
+        svgGenerator.setColor(new Color(0, 50, 50));
         bad.draw(svgGenerator);
-        svgGenerator.setColor(new Color(255, 255, 0));
+        svgGenerator.setColor(new Color(150, 150, 150));
         bda.draw(svgGenerator);
 
         svgWriter.writeSVG();

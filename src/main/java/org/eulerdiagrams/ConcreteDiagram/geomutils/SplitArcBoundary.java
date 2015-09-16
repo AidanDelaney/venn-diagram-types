@@ -32,7 +32,16 @@ import math.geom2d.domain.BoundaryPolyCurve2D;
  * </ul>
  * 
  * We consider that where two contours meet at a tangent, they are
- * non-intersecting.
+ * non-intersecting.  This has reprecussions, for example: When you take
+ * 
+ * <pre>
+ * {@code
+ * SplitArcBoundary ex1 = a.less(b),
+ *                  ex2 = b.less(a);
+ * }
+ * </pre>
+ * 
+ * the union of ex1 and ex2 is not necessarily equal to <code>a.union(b)</code>.
  *
  */
 public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
@@ -108,7 +117,24 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @return
      */
     public Optional<SplitArcBoundary> union(SplitArcBoundary other) {
-        return Optional.empty();
+        Optional<SplitArcBoundary> ix = intersection(other);
+        if(!ix.isPresent()) {
+            // either disconnected or one is fully contained in the other
+            boolean thisContained = this.curves.stream().allMatch(x -> other.contains(x));
+            if(thisContained) return Optional.of(other);
+
+            boolean otherContained = other.curves.stream().allMatch(x -> this.contains(x));
+            if(otherContained) return Optional.of(this);
+
+            return Optional.empty();
+        }
+
+        Set<CircleArc2D> arcs = new HashSet<>();
+        arcs.addAll(this.curves());
+        arcs.addAll(other.curves());
+        arcs.removeAll(ix.get().curves());
+
+        return Optional.of(fromCollection(arcs, arcs.stream().findFirst()));
     }
 
     public Optional<SplitArcBoundary> intersection(SplitArcBoundary other) {
