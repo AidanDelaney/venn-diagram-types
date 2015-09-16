@@ -152,6 +152,11 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         return Optional.of(fromCollection(arcs, arcs.stream().filter(x -> x.curvature(0) > 0).findFirst())); // get the first CCW curve
     }
 
+    /**
+     * Removes the intersecting area of other from this.
+     * @param other
+     * @return A collection of new regions formed by removing other from this.
+     */
     public Optional<Collection<SplitArcBoundary>> less(SplitArcBoundary other) {
         Set<CircleArc2D> arcs = new HashSet<>();
         arcs.addAll(this.curves);
@@ -197,6 +202,11 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         return Optional.of(boundaries);
     }
 
+    /**
+     * Calculates the points of intersection of SplitArcBoundaries.
+     * @param other
+     * @return
+     */
     protected Optional<Collection<Point2D>> intersectionPoints(SplitArcBoundary other) {
         Collection<Point2D> ixs = new HashSet<Point2D>();
         for(CircleArc2D a1 : this.curves) {
@@ -325,5 +335,9 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
 
         return true;
+    }
+
+    public int hashCode() {
+        return curves.hashCode() + (closed?0:1);
     }
 }
