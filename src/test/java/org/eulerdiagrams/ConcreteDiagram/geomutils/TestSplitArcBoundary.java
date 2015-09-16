@@ -137,4 +137,32 @@ public class TestSplitArcBoundary {
 
         svgWriter.writeSVG();
     }
+
+    @Test
+    public void testRegionSplittingLess() {
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testRegionSpllittingLess.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+        
+        saba.draw(svgGenerator);
+        sabb.draw(svgGenerator);
+        sabc.draw(svgGenerator);
+        sabd.draw(svgGenerator);
+        sabe.draw(svgGenerator);
+        sabf.draw(svgGenerator);
+        sabg.draw(svgGenerator);
+
+        Optional<SplitArcBoundary> uab = saba.intersection(sabb);
+        assertThat(uab, is(not(Optional.empty())));
+
+        Optional<Collection<SplitArcBoundary>> lacg = uab.get().less(sabg);
+        assertThat(lacg.get().size(), is(2));
+
+        svgGenerator.setColor(new Color(255, 0, 0));
+        for(SplitArcBoundary arc: lacg.get()) {
+            arc.draw(svgGenerator);
+        }
+
+        svgWriter.writeSVG();
+    }
 }

@@ -186,7 +186,10 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
                 if(arcs.contains(arc)) {
                     arcs.remove(arc);
                 } else {
-                    arcs.remove(arc.reverse());
+                    // This doesn't work as we need to use almostEquals for
+                    // double comparisons.
+                    // arcs.remove(arc.reverse());
+                    arcs = arcs.stream().filter(x -> ! x.almostEquals(arc.reverse(), Shape2D.ACCURACY)).collect(Collectors.toSet());
                 }
             }
         } while (! arcs.isEmpty());
