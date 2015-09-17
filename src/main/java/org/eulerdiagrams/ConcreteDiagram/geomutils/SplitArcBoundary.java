@@ -14,6 +14,8 @@ import math.geom2d.Shape2D;
 import math.geom2d.conic.Circle2D;
 import math.geom2d.conic.CircleArc2D;
 import math.geom2d.domain.BoundaryPolyCurve2D;
+import math.geom2d.polygon.Polygon2D;
+import math.geom2d.polygon.SimplePolygon2D;
 
 /**
  * A SplitArcBoundary has the following properties:
@@ -117,6 +119,12 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @return
      */
     public Optional<SplitArcBoundary> union(SplitArcBoundary other) {
+        if(this.curves.isEmpty()) {
+            return Optional.of(other);
+        } else if (other.curves.isEmpty()) {
+            return Optional.of(this);
+        }
+
         Optional<SplitArcBoundary> ix = intersection(other);
         if(!ix.isPresent()) {
             // either disconnected or one is fully contained in the other
@@ -138,6 +146,12 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
     }
 
     public Optional<SplitArcBoundary> intersection(SplitArcBoundary other) {
+        if(this.curves.isEmpty()) {
+            return Optional.empty();
+        } else if (other.curves.isEmpty()) {
+            return Optional.empty();
+        }
+
         Set<CircleArc2D> iarcs = new HashSet<>();
         iarcs.addAll(curves);
         iarcs.addAll(other.curves);
@@ -247,6 +261,12 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         return curves.contains(arc) || curves.contains(arc.reverse());
     }
 
+    /**
+     * Does this boundary contain the given arc either on the boundary or
+     * within the interior.
+     * @param arc
+     * @return
+     */
     public boolean bounds(CircleArc2D arc) {
         // Represent the arc as three points
         Point2D start = arc.firstPoint(), last = arc.lastPoint(), mid = Utils.midpoint(arc);
@@ -259,6 +279,15 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         return s && m && l;
     }
 
+    /**
+     * Does this boundary contain the other boundary within in it.  The
+     * definition of within, in this case, also includes being on the boundary.
+     * @param other
+     * @return
+     */
+    public boolean bounds(SplitArcBoundary other) {
+        return other.curves.stream().allMatch(a -> this.bounds(a));
+    }
     /**
      * Turns a collection of arcs that describe a contiguous boundary into a 
      * contiguous boundary.  This is not offered as a constructor as it's not
@@ -310,6 +339,31 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns the area of this SplitArcBoundary.
+     * @param out The circles of which this boundary is outside.
+     * @return
+     */
+    public double getArea(Collection<Circle2D> out) {
+        if(this.isEmpty()) return 0;
+
+        Polygon2D internal = new SimplePolygon2D();
+        for(CircleArc2D arc: this) {
+            internal.addVertex(arc.lastPoint());
+        }
+
+        double area = Math.abs(internal.area());
+        for(CircleArc2D arc: this) {
+            if(out.stream().noneMatch(c -> c.equals(arc.supportingCircle()))) {
+                area += Math.abs(arc.getChordArea());
+            } else {
+                area -= Math.abs(arc.getChordArea());
+            }
+        }
+
+        return area;
     }
 
     /**
