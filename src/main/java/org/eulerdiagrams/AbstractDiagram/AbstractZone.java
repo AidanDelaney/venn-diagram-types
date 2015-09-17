@@ -19,6 +19,10 @@ public class AbstractZone {
         return in;
     }
 
+    public final Set<AbstractContour> getOutContours() {
+        return out;
+    }
+
     public boolean equals(Object o) {
         if(o instanceof AbstractZone) {
             AbstractZone z = (AbstractZone) o;
@@ -27,5 +31,9 @@ public class AbstractZone {
             return (in.equals(z.in) && out.equals(z.out));
         }
         return false;
+    }
+
+    public String toString() {
+        return "(" + in.toString() + ", " + out.toString() + ")";
     }
 }
