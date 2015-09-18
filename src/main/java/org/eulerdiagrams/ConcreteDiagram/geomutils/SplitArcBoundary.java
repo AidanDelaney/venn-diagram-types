@@ -347,14 +347,26 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @return
      */
     public double getArea(Collection<Circle2D> out) {
-        if(this.isEmpty()) return 0;
+        if(this.isEmpty()) return 0.0;
 
-        Polygon2D internal = new SimplePolygon2D();
-        for(CircleArc2D arc: this) {
-            internal.addVertex(arc.lastPoint());
+        // if only one arc, then PI* r^2
+        if(1  == size()) {
+            return Math.PI * Math.pow(get(0).supportingCircle().radius(), 2.0);
         }
 
-        double area = Math.abs(internal.area());
+        // if only two arcs, then  don't compute the internal polygon (there is
+        // none.
+        double area = 0.0;
+
+        if(2 <= size()) {
+            Polygon2D internal = new SimplePolygon2D();
+            for(CircleArc2D arc: this) {
+                internal.addVertex(arc.lastPoint());
+            }
+
+            area = Math.abs(internal.area());
+        }
+
         for(CircleArc2D arc: this) {
             if(out.stream().noneMatch(c -> c.equals(arc.supportingCircle()))) {
                 area += Math.abs(arc.getChordArea());

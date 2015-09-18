@@ -89,7 +89,6 @@ public class ConcreteDiagram {
             double area = 0.0;
             for(Cluster c : bins) {
                 area += c.getArea(az);
-                System.out.println(az.toString() + " " + c.getArea(az));
             }
             areas.put(az, area);
         }

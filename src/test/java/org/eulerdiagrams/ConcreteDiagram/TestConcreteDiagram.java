@@ -8,11 +8,13 @@ import java.util.*;
 
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
+import org.eulerdiagrams.AbstractDiagram.AbstractZone;
 import org.eulerdiagrams.utils.NAryTree;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 import org.eulerdiagrams.vennom.graph.Edge;
 import math.geom2d.Point2D;
+import math.geom2d.Shape2D;
 import math.geom2d.conic.Circle2D;
 
 import org.junit.Before;
@@ -66,7 +68,6 @@ public class TestConcreteDiagram {
 
     @Test
     public void testVenn2Circles() {
-        Vector<ConcreteCircle> circles = new Vector<>();
         Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
         Circle2D circleB = new Circle2D(new Point2D(5, 0), 7.0);
         ConcreteCircle ca = new ConcreteCircle(a, circleA, Arrays.asList(circleB));
@@ -75,6 +76,27 @@ public class TestConcreteDiagram {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
         d.getZoneAreaMap();
+    }
+
+    @Test
+    public void testDisconnected2Circles() {
+        Circle2D circleA = new Circle2D(new Point2D(-10, 0), 7.0);
+        Circle2D circleB = new Circle2D(new Point2D(10, 0), 7.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA, Arrays.asList(circleB));
+        ConcreteCircle cb = new ConcreteCircle(b, circleB, Arrays.asList(circleA));
+
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
+        Map<AbstractZone, Double> map = d.getZoneAreaMap();
+
+        AbstractZone az = new AbstractZone(new HashSet<>(Arrays.asList(a)), new HashSet<>(Arrays.asList(b)));
+        System.out.println(map.get(az));
+        for(AbstractZone z : map.keySet()) {
+            System.out.println(z.toString() + " " + map.get(z));
+            if(z.equals(az)) {
+                assertThat(153.93791, is(closeTo(map.get(z), 0.001)));
+            }
+        }
     }
 /*
     @Test
