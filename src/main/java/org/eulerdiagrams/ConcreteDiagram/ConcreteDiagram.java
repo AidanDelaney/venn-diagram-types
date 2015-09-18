@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.utils.NAryTree;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.Pair;
+import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 
@@ -86,8 +86,6 @@ public class ConcreteDiagram {
         Map<AbstractZone, Double> areas = new HashMap<>();
 
         for(AbstractZone az: new VennSetIterator(abstractDiagram.getContours())) {
-            //ConcreteZone c = new ConcreteZone(az.getInContours(), az.getOutContours(), circles);
-            //areas.put(az, c.getArea());
             double area = 0.0;
             for(Cluster c : bins) {
                 area += c.getArea(az);
