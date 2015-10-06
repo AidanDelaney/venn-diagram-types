@@ -59,6 +59,21 @@
             <target>1.8</target>
           </configuration>
         </plugin>
+        <!-- shade the jar
+           We need this to allow building with the transitive closure of the dependancies.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
         <!-- Configure Unit tests: do not impose tests to pass to build jar -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
