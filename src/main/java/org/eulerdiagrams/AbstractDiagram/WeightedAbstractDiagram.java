@@ -42,4 +42,19 @@ public class WeightedAbstractDiagram extends AbstractDiagram {
     public final Map<AbstractZone, Double> getWeightedZones() {
         return w_zones;
     }
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer("(");
+        sb.append(contours.toString());
+        sb.append(", {");
+        for(Iterator<AbstractZone> i = getZones().iterator(); i.hasNext();) {
+            AbstractZone z = i.next();
+            sb.append("(" + z.toString() + ", " + w_zones.get(z) + ")");
+            if(i.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        sb.append("})");
+        return sb.toString();
+    }
 }

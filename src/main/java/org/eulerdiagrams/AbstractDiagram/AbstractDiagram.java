@@ -2,6 +2,7 @@ package org.eulerdiagrams.AbstractDiagram;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,5 +38,19 @@ public class AbstractDiagram {
 
     public Set<AbstractZone> getZones() {
         return zones;
+    }
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer("(");
+        sb.append(contours.toString());
+        sb.append(", {");
+        for(Iterator<?> i = zones.iterator(); i.hasNext();) {
+            sb.append(i.next().toString());
+            if(i.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        sb.append("})");
+        return sb.toString();
     }
 }
