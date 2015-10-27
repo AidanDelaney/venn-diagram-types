@@ -23,14 +23,35 @@ public class AbstractZone {
         return out;
     }
 
-    public boolean equals(Object o) {
-        if(o instanceof AbstractZone) {
-            AbstractZone z = (AbstractZone) o;
-            // Zones that don't have the same contour set are incomparable and
-            // this is modelled as false.
-            return (in.equals(z.in) && out.equals(z.out));
-        }
-        return false;
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((in == null) ? 0 : in.hashCode());
+        result = prime * result + ((out == null) ? 0 : out.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        AbstractZone other = (AbstractZone) obj;
+        if (in == null) {
+            if (other.in != null)
+                return false;
+        } else if (!in.equals(other.in))
+            return false;
+        if (out == null) {
+            if (other.out != null)
+                return false;
+        } else if (!out.equals(other.out))
+            return false;
+        return true;
     }
 
     public String toString() {
