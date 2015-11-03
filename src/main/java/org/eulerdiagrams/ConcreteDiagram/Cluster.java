@@ -85,6 +85,15 @@ public class Cluster implements Comparable<Cluster> {
                 sab = osab.get();
             }
         }
+
+        for(ConcreteCircle cc: outz) {
+            Optional<Collection<SplitArcBoundary>> osabs = sab.less(cc.getBoundary());
+            // FIXME: the findFirst below makes the assumption that the `less`
+            //        operation doesn't split a zone.
+            if(osabs.isPresent()) {
+                sab = osabs.get().stream().findFirst().get();
+            }
+        }
         // Return the area of <in, subset(out)>
         Set<Circle2D> outCircles = outz.stream().map(ConcreteCircle::getCircle).collect(Collectors.toSet()); 
         return sab.getArea(outCircles);

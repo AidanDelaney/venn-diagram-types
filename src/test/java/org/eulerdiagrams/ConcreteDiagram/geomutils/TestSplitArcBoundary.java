@@ -165,4 +165,29 @@ public class TestSplitArcBoundary {
 
         svgWriter.writeSVG();
     }
+
+    @Test
+    public void testSimpleArea() {
+        Circle2D ca = new Circle2D(0,-10, 10);
+        Circle2D cb = new Circle2D(0, 10, 10);
+
+        SplitArcBoundary saba = new SplitArcBoundary(ca, Arrays.asList(cb));
+        double area = saba.getArea(Arrays.asList(cb));
+
+        assertThat(area, is(closeTo(Math.PI * 10 * 10, 0.0001)));
+    }
+
+    @Test
+    public void testVenn2Area() {
+        Circle2D ca = new Circle2D(0,-5, 10);
+        Circle2D cb = new Circle2D(0, 5, 10);
+
+        SplitArcBoundary saba = new SplitArcBoundary(ca, Arrays.asList(cb));
+        SplitArcBoundary sabb = new SplitArcBoundary(cb, Arrays.asList(ca));
+        SplitArcBoundary onlyA = saba.less(sabb).get().stream().findFirst().get(); //uugh!
+        double areaA = onlyA.getArea(Arrays.asList(cb));
+
+        double areaAB = (saba.intersection(sabb)).get().getArea(Arrays.asList());
+        assertThat(areaA + areaAB, is(closeTo(Math.PI * 10 * 10, 0.0001)));
+    }
 }

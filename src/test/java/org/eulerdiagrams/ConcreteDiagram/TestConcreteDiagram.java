@@ -67,6 +67,20 @@ public class TestConcreteDiagram {
     }
 
     @Test
+    public void testSingleCircle() {
+        Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA, Arrays.asList());
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca));
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        // For simple diagrams, this is easier than picking out a specific zone
+        for(AbstractZone z: areas.keySet()) {
+            assertThat(areas.get(z), isOneOf(Double.POSITIVE_INFINITY, Math.PI * 49.0));
+        }
+    }
+
+    @Test
     public void testVenn2Circles() {
         Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
         Circle2D circleB = new Circle2D(new Point2D(5, 0), 7.0);
@@ -75,7 +89,18 @@ public class TestConcreteDiagram {
 
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
-        d.getZoneAreaMap();
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        Set<AbstractContour> inset = new HashSet<>(Arrays.asList(a,b));
+        AbstractZone zab = new AbstractZone(inset, new HashSet<>());
+        Double intersection = areas.get(zab);
+        assertThat(intersection, closeTo(27.0, 0.5));
+
+        // 49 is 7^2
+        double expected = (Math.PI * 49.0) - intersection;
+        AbstractZone za = new AbstractZone(new HashSet<>(Arrays.asList(a)),
+                                          new HashSet<>(Arrays.asList(b)));
+        assertThat(areas.get(za), closeTo(expected, 0.5));
     }
 
     @Test

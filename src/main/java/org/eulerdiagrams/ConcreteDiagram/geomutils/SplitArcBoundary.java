@@ -342,7 +342,10 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
     }
 
     /**
-     * Returns the area of this SplitArcBoundary.
+     * Returns the area of this SplitArcBoundary.  We don't use the curvature of
+     * the arc to compute whether the arc chord should be added to or subtracted
+     * from the internal area.  Instead we go with the more brain-dead solution
+     * of passing in those circles that this Boundary is outside.
      * @param out The circles of which this boundary is outside.
      * @return
      */
@@ -358,7 +361,7 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         // none.
         double area = 0.0;
 
-        if(2 <= size()) {
+        if(size() > 2) {
             Polygon2D internal = new SimplePolygon2D();
             for(CircleArc2D arc: this) {
                 internal.addVertex(arc.lastPoint());
@@ -368,6 +371,8 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
 
         for(CircleArc2D arc: this) {
+            Circle2D sc = arc.supportingCircle();
+
             if(out.stream().noneMatch(c -> c.equals(arc.supportingCircle()))) {
                 area += Math.abs(arc.getChordArea());
             } else {
