@@ -14,6 +14,8 @@ public class VennSetIterator implements Iterable<AbstractZone>, Iterator<Abstrac
         this.maxSize = set.size();
         arr.addAll(set);
         bset = new BitSet(arr.size() + 1);
+        incrementBitSet(); // don't start with all 0's as this creates the 
+                           // "outside" zone.
     }
 
     @Override
