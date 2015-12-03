@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import org.eulerdiagrams.utils.Pair;
+
 import math.geom2d.Point2D;
 import math.geom2d.Shape2D;
 import math.geom2d.conic.Circle2D;
@@ -34,7 +36,7 @@ import math.geom2d.polygon.SimplePolygon2D;
  * </ul>
  * 
  * We consider that where two contours meet at a tangent, they are
- * non-intersecting.  This has reprecussions, for example: When you take
+ * non-intersecting.  This has repercussions, for example: When you take
  * 
  * <pre>
  * {@code
@@ -56,32 +58,63 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @param circle The boundary that we intend to create.
      * @param others All circles that circle could possibly intersect with.
      */
-    public SplitArcBoundary(Circle2D circle, Collection<Circle2D> others) {
+    public SplitArcBoundary(Collection<Circle2D> inside, Collection<Circle2D> outside) throws IllegalArgumentException{
         super();
-        CircleArc2D ca = new CircleArc2D(circle, 0, Math.PI * 2);
-        add(ca);
 
-        Collection<Point2D> ixs = new Vector<>();
-        for(Circle2D other: others) {
-            CircleArc2D oca = new CircleArc2D(other, 0, Math.PI * 2);
-            SplitArcBoundary sab = new SplitArcBoundary();
-            sab.add(oca);
-            Optional<Collection<Point2D>> ps = intersectionPoints(sab); 
+        if(inside.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
 
-            if(ps.isPresent()) {
-                ixs.addAll(ps.get());
+        Collection<SplitArcBoundary> ins = splitBoundaries(inside);
+
+        // Get one of the boundaries in in and add all it's curves to this
+        SplitArcBoundary first = ins.stream().findAny().get(); // we know there's at least one.
+        first.curves.forEach(c -> add(c));
+
+        // For all elements of `ins` that are not `first`
+        for(SplitArcBoundary other: ins.stream().filter(c -> !c.equals(first)).collect(Collectors.toSet())) {
+            Optional<SplitArcBoundary> sab = this.intersection(other);
+
+            if(sab.isPresent()) {  // if it intersects
+                this.curves = sab.get().curves;
+            } else if (!other.bounds(this)) {  // or if it's not contained
+                throw new IllegalArgumentException("This SplitArcBoundary neither intersects with nor is contained by " + other);
             }
         }
 
-        for(Point2D p: ixs) {
-            split(p);
+        for(Circle2D other : outside) {
+            Optional<SplitArcBoundary> sab = this.less(other);
+            if(sab.isPresent()) {
+                this.curves = sab.get().curves;
+            }
         }
+    }
+
+    private Collection<SplitArcBoundary> splitBoundaries(Collection<Circle2D> inside) {
+        Set<SplitArcBoundary> sabs = new HashSet<>();
+        // For each circle, split it at each intersection point with another circle
+        for(Circle2D c1: inside) {
+            for(Circle2D c2: inside) {
+                if(c1.equals(c2)) continue;
+
+                SplitArcBoundary s1 = new SplitArcBoundary(), s2 = new SplitArcBoundary();
+                CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2.0)
+                        , ca2 = new CircleArc2D(c1, 0, Math.PI * 2.0);
+                s1.add(ca1);
+                s2.add(ca2);
+
+                Collection<Point2D> ps = s1.intersectionPoints(s2);
+                ps.forEach(p -> s1.split(p));
+                sabs.add(s1);
+            }
+        }
+        return null;
     }
 
     /**
      * Creates an empty Boundary.
      */
-    public SplitArcBoundary () {
+    private SplitArcBoundary () {
         super();
     }
 
@@ -112,39 +145,6 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
     }
 
-    /**
-     * The union of two Boundaries is the external boundary of both, when taken
-     * together.
-     * @param other
-     * @return
-     */
-    public Optional<SplitArcBoundary> union(SplitArcBoundary other) {
-        if(this.curves.isEmpty()) {
-            return Optional.of(other);
-        } else if (other.curves.isEmpty()) {
-            return Optional.of(this);
-        }
-
-        Optional<SplitArcBoundary> ix = intersection(other);
-        if(!ix.isPresent()) {
-            // either disconnected or one is fully contained in the other
-            boolean thisContained = this.curves.stream().allMatch(x -> other.contains(x));
-            if(thisContained) return Optional.of(other);
-
-            boolean otherContained = other.curves.stream().allMatch(x -> this.contains(x));
-            if(otherContained) return Optional.of(this);
-
-            return Optional.empty();
-        }
-
-        Set<CircleArc2D> arcs = new HashSet<>();
-        arcs.addAll(this.curves());
-        arcs.addAll(other.curves());
-        arcs.removeAll(ix.get().curves());
-
-        return Optional.of(fromCollection(arcs, arcs.stream().findFirst()));
-    }
-
     public Optional<SplitArcBoundary> intersection(SplitArcBoundary other) {
         if(this.curves.isEmpty()) {
             return Optional.empty();
@@ -167,53 +167,41 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
     }
 
     /**
-     * Removes the intersecting area of other from this.
+     * Removes the intersecting area of other from this.  FIXME: Does not
+     * produce a set of boundaries where the circle splits an existing boundary.
      * @param other
      * @return A collection of new regions formed by removing other from this.
      */
-    public Optional<Collection<SplitArcBoundary>> less(SplitArcBoundary other) {
+    public Optional<SplitArcBoundary> less(Circle2D other) {
         Set<CircleArc2D> arcs = new HashSet<>();
         arcs.addAll(this.curves);
 
 
-        Optional<SplitArcBoundary> ix = this.intersection(other);
-        if(!ix.isPresent()) {
-            return Optional.empty();
+        Set<Point2D> ixs = arcs.stream().flatMap(a -> a.intersections(new CircleArc2D(other, 0.0, Math.PI * 2)).stream()).collect(Collectors.toSet());
+
+        // if no intersecitons, return this
+        switch(ixs.size()) {
+        case 0: return Optional.of(this); // not connected in any way
+        case 1: return Optional.of(this); // tangentally touching
+        case 2: break;// what we want
+        default: return Optional.empty(); // case where this is split into more than two zones by other
         }
 
-        // Remove curves from the intersection that are contained in this curves
-        // list.
-        Collection<CircleArc2D> ixCurvesOnThis = ix.get().curves.stream().filter(x -> this.contains(x)).collect(Collectors.toSet());
-        // ix's curves become those curves on other, not in this. 
-        ix.get().curves().removeAll(ixCurvesOnThis);
+        // get `arcs` that are outside other
+        arcs = arcs.stream().filter(a -> !other.contains(a.point(0.5))).collect(Collectors.toSet());
 
-        arcs.removeAll(ixCurvesOnThis);
-        arcs.addAll(ix.get().curves());
+        // Pick one of these
+        Optional<CircleArc2D> first = arcs.stream().findAny();
 
-        if(arcs.isEmpty()) {
-            return Optional.empty();
-        }
+        // add the intersection arc
+        Point2D p1 = ixs.stream().findAny().get();
+        ixs.remove(p1);
+        Point2D p2 = ixs.stream().findAny().get();
+        CircleArc2D arc = new CircleArc2D(other.center(), other.radius(), other.position(p1), other.position(p2));
+        arcs.add(arc);
 
-        List<SplitArcBoundary> boundaries = new Vector<>();
-        do {
-            SplitArcBoundary boundary = fromCollection(arcs, arcs.stream().findFirst());
-            boundaries.add(boundary);
-
-            // Essentially collection.removeAll, but we have to account for
-            // edges that have changed direction.
-            for(CircleArc2D arc: boundary.curves) {
-                if(arcs.contains(arc)) {
-                    arcs.remove(arc);
-                } else {
-                    // This doesn't work as we need to use almostEquals for
-                    // double comparisons.
-                    // arcs.remove(arc.reverse());
-                    arcs = arcs.stream().filter(x -> ! x.almostEquals(arc.reverse(), Shape2D.ACCURACY)).collect(Collectors.toSet());
-                }
-            }
-        } while (! arcs.isEmpty());
-
-        return Optional.of(boundaries);
+        SplitArcBoundary boundary = SplitArcBoundary.fromCollection(arcs, first);
+        return Optional.of(boundary);
     }
 
     /**
@@ -221,7 +209,7 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @param other
      * @return
      */
-    protected Optional<Collection<Point2D>> intersectionPoints(SplitArcBoundary other) {
+    protected Collection<Point2D> intersectionPoints(SplitArcBoundary other) {
         Collection<Point2D> ixs = new HashSet<Point2D>();
         for(CircleArc2D a1 : this.curves) {
             for(CircleArc2D a2 : other.curves) {
@@ -232,25 +220,15 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
             }
         }
 
-        if(ixs.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(ixs);
+        return ixs;
     }
 
     public static Optional<Collection<Point2D>> nonTangentalIntersections (CircleArc2D c, CircleArc2D ca) {
-        Optional<Collection<Point2D>> ixs = c.intersections(ca);
-        if(ixs.isPresent()) {
-
-            // A point is a tangent point if the tangents of this arc and ca (at point p) are parallel.  They're
-            // parallel if tangent1 \times tangent2 is 0
-            Collection<Point2D> cleaned = ixs.get().stream()
-                    .filter(p -> 0.0 != c.tangent(c.position(p)).cross(ca.tangent(ca.position(p))))
-                    .collect(Collectors.toList());
-            return Optional.of(cleaned);
+        Collection<Point2D> ixs = c.intersections(ca);
+        if(ixs.size() >= 2) {
+            return Optional.of(ixs);
         }
-        return ixs;
+        return Optional.empty();
     }
 
     /**
