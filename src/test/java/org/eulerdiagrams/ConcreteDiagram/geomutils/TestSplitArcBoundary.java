@@ -52,4 +52,70 @@ public class TestSplitArcBoundary {
 
         svgWriter.writeSVG();
     }
+
+    @Test
+    public void testLessContained() {
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testLessContained.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        Circle2D a = new Circle2D(0, 0, 40);
+        Circle2D b = new Circle2D(0, 0, 10);
+
+        SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
+        SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList(a));
+        SplitArcBoundary r_ab = r_b.less(a).get();
+        r_a.draw(svgGenerator);
+        r_b.draw(svgGenerator);
+        r_ab.draw(svgGenerator);
+
+        assertThat(r_b, is(equalTo(r_ab)));
+        assertThat(r_a, is(not(equalTo(r_b))));
+        assertThat(r_a.bounds(r_b), is(true));
+
+        svgWriter.writeSVG();
+    }
+
+    @Test
+    public void testIntersectionVenn2() {
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testIntersectionVenn2.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        Circle2D a = new Circle2D(-20, 0, 40);
+        Circle2D b = new Circle2D(20, 0, 40);
+
+        SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
+        SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList(a));
+        SplitArcBoundary r_ab = new SplitArcBoundary(Arrays.asList(a,b), Arrays.asList());
+        r_a.draw(svgGenerator);
+        r_b.draw(svgGenerator);
+        r_ab.draw(svgGenerator);
+
+        fail(); // need to put some conditions in here
+
+        svgWriter.writeSVG();
+    }
+
+
+    @Test
+    public void testLessVenn2() {
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testLessVenn2.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        Circle2D a = new Circle2D(-20, 0, 40);
+        Circle2D b = new Circle2D(20, 0, 40);
+
+        SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList());
+        SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList());
+        SplitArcBoundary z_a = r_a.less(b).get();
+        //r_a.draw(svgGenerator);
+        //r_b.draw(svgGenerator);
+        z_a.draw(svgGenerator);
+
+        fail(); // need to put some conditions in here
+
+        svgWriter.writeSVG();
+    }
 }

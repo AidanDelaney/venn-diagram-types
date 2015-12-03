@@ -189,18 +189,20 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         default: return Optional.empty(); // case where this is split into more than two zones by other
         }
 
+        // Make sure that the intersection points are in our "Euler graph"
+        ixs.forEach(p -> this.split(p));
+
         // get `arcs` that are outside other
-        arcs = arcs.stream().filter(a -> !other.contains(a.point(0.5))).collect(Collectors.toSet());
+        // i.e. their midpoint is > radius away from the centre of other
+        arcs = this.curves.stream().filter(a -> (Math.abs(other.distance(Utils.midpoint(a)) - other.radius()) <= Shape2D.ACCURACY)).collect(Collectors.toSet());
 
         // Pick one of these
         Optional<CircleArc2D> first = arcs.stream().findAny();
 
-        // add the intersection arc
-        Point2D p1 = ixs.stream().findAny().get();
-        ixs.remove(p1);
-        Point2D p2 = ixs.stream().findAny().get();
-        CircleArc2D arc = new CircleArc2D(other.center(), other.radius(), other.position(p1), other.position(p2));
-        arcs.add(arc);
+        // add the intersection arc -- Note: there can be only one.
+        SplitArcBoundary osab = new SplitArcBoundary() {{ add(new CircleArc2D(other, 0, Math.PI * 2.0)); }};
+        ixs.forEach(p -> osab.split(p));
+        arcs.addAll(osab.curves.stream().filter(a -> this.bounds(a)).collect(Collectors.toSet()));
 
         SplitArcBoundary boundary = SplitArcBoundary.fromCollection(arcs, first);
         return Optional.of(boundary);
