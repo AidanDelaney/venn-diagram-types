@@ -4,7 +4,8 @@ import java.util.*;
 import java.util.List;
 
 import org.eulerdiagrams.AbstractDiagram.*;
-import org.eulerdiagrams.utils.NAryTree;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
 import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
@@ -15,9 +16,9 @@ import math.geom2d.conic.Circle2D;
 public class ConcreteDiagram {
 
     private AbstractDiagram abstractDiagram;
-    private Vector<Cluster> bins; 
 
-    private NAryTree<Cluster> containment;
+    private Map<AbstractZone, Collection<SplitArcBoundary>> zoneMap = new HashMap<>();
+    private Map<SplitArcBoundary, Collection<SplitArcBoundary>> children = new HashMap<>();
 
     public ConcreteDiagram(Graph g, AbstractDiagram ad) {
         abstractDiagram = ad;
@@ -48,7 +49,7 @@ public class ConcreteDiagram {
             Collection<Circle2D> others = new Vector<>();
             cs.forEach(x -> others.add(x.cdr));
             others.remove(p.cdr);
-            circles.add(new ConcreteCircle(p.car, p.cdr, others));
+            circles.add(new ConcreteCircle(p.car, p.cdr));
         }
 
         generateClusters(circles);
@@ -59,38 +60,26 @@ public class ConcreteDiagram {
         generateClusters(circles);
     }
 
-    /* package */ void generateClusters(List<ConcreteCircle> circles) {
-        bins = new Vector<>();
-
-        for(ConcreteCircle c: circles) {
-            boolean added = bins.stream().anyMatch(b -> b.add(c));
-
-            if(!added) {
-                bins.add(new Cluster(Arrays.asList(c)));
+    private void generateClusters(List<ConcreteCircle> circles) {
+        // Generate the Venn set of the input circles.
+        ConcreteZoneVennSetIterator czvsi = new ConcreteZoneVennSetIterator(circles);
+        for(Pair<AbstractZone, Optional<SplitArcBoundary>> p : czvsi) {
+            if(p.cdr.isPresent()) {
+                if(zoneMap.containsKey(p.car)) {
+                    zoneMap.get(p.car).add(p.cdr.get());
+                } else {
+                    zoneMap.put(p.car, new HashSet<SplitArcBoundary>(){{add(p.cdr.get());}});
+                }
             }
-        }
-
-        generateContainmentHeirarchy();
-    }
-
-    /* package */ void generateContainmentHeirarchy() {
-        // Add the top level
-        containment = new NAryTree<>(Cluster.Top.getInstance());
-        
-        for(Cluster c : bins) {
-            containment.insert(c);
         }
     }
 
     public Map<AbstractZone, Double> getZoneAreaMap () {
         Map<AbstractZone, Double> areas = new HashMap<>();
 
-        for(AbstractZone az: new VennSetIterator(abstractDiagram.getContours())) {
-            double area = 0.0;
-            for(Cluster c : bins) {
-                area += c.getArea(az);
-            }
-            areas.put(az, area);
+        for(AbstractZone z: zoneMap.keySet()) {
+            double d = zoneMap.get(z).stream().mapToDouble(SplitArcBoundary::getArea).sum();
+            areas.put(z, d);
         }
         return areas;
     }

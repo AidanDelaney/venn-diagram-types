@@ -10,17 +10,11 @@ import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
 
 public class ConcreteCircle {
     private AbstractContour contour;
-    private SplitArcBoundary circle;
     private Circle2D oCircle;
 
-    public ConcreteCircle(AbstractContour c, Circle2D circle, Collection<Circle2D> others) {
+    public ConcreteCircle(AbstractContour c, Circle2D circle) {
         this.contour = c;
-        this.circle = new SplitArcBoundary(circle, others);
         this.oCircle = circle;
-    }
-
-    public SplitArcBoundary getBoundary() {
-        return circle;
     }
 
     public AbstractContour getContour() {
@@ -31,38 +25,35 @@ public class ConcreteCircle {
         return oCircle;
     }
 
-    public boolean intersects(ConcreteCircle other) {
-        Optional<SplitArcBoundary> ixs = circle.intersection(other.circle);
-        
-        return ixs.isPresent();
-    }
-    @Override
-    public boolean equals(Object o) {
-        if(null == o) {
-            return false;
-        }
-
-        if(! (o instanceof ConcreteCircle)) return false;
-        ConcreteCircle other = (ConcreteCircle) o;
-
-        // Internal contours *could* be null
-        if((null == contour  && null != other.contour) ||
-                (null != contour  && null == other.contour) ) {
-            return false;
-        }
-
-        if(null == contour) {
-            return circle.equals(other.circle);
-        }
-        return contour.equals(other.contour) && circle.equals(other.circle);
-    }
-
     @Override
     public int hashCode() {
-        int hash = 1;
-        hash = hash *  17 + ((null == contour) ? 0 : contour.hashCode());
-        hash = hash * 31 + ((null == circle) ? 0 : circle.hashCode());
-        return hash;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((contour == null) ? 0 : contour.hashCode());
+        result = prime * result + ((oCircle == null) ? 0 : oCircle.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ConcreteCircle other = (ConcreteCircle) obj;
+        if (contour == null) {
+            if (other.contour != null)
+                return false;
+        } else if (!contour.equals(other.contour))
+            return false;
+        if (oCircle == null) {
+            if (other.oCircle != null)
+                return false;
+        } else if (!oCircle.equals(other.oCircle))
+            return false;
+        return true;
     }
 
     @Override
