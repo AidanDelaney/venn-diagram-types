@@ -88,7 +88,7 @@ public class TestSplitArcBoundary {
         SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
         SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList(a));
         SplitArcBoundary r_ab = new SplitArcBoundary(Arrays.asList(a,b), Arrays.asList());
-        r_a.draw(svgGenerator);
+        //r_a.draw(svgGenerator);
         r_b.draw(svgGenerator);
         r_ab.draw(svgGenerator);
 
@@ -110,9 +110,11 @@ public class TestSplitArcBoundary {
         SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList());
         SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList());
         SplitArcBoundary z_a = r_a.less(b).get();
+        SplitArcBoundary z_b = r_b.less(a).get();
         //r_a.draw(svgGenerator);
         //r_b.draw(svgGenerator);
         z_a.draw(svgGenerator);
+        z_b.draw(svgGenerator);
 
         fail(); // need to put some conditions in here
 
