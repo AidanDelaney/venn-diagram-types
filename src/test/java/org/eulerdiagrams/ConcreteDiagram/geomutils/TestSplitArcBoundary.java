@@ -3,13 +3,18 @@ package org.eulerdiagrams.ConcreteDiagram.geomutils;
 import math.geom2d.conic.Circle2D;
 import math.geom2d.conic.CircleArc2D;
 
+import org.eulerdiagrams.ConcreteDiagram.Cluster;
+import org.eulerdiagrams.ConcreteDiagram.ConcreteDiagram;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.TestUtils.SVGWriter;
+import org.eulerdiagrams.utils.NAryTree;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -18,176 +23,33 @@ import static org.hamcrest.Matchers.*;
 
 public class TestSplitArcBoundary {
 
-    private SplitArcBoundary saba, sabb, sabc, sabd, sabe, sabf, sabg;
+    @Test
+    public void testSplitBoundary() {
+        Collection<SplitArcBoundary> actual = SplitArcBoundary.splitBoundaries(Arrays.asList(new Circle2D(0, 0, 10)));
 
-    @Before
-    public void before() {
-        Circle2D ca = new Circle2D(-50, 0, 60);
-        Circle2D cb = new Circle2D(50, 0, 60);
-        Circle2D cc = new Circle2D(0, -50, 50);
-        Circle2D cd = new Circle2D(10, 0, 5);
-        Circle2D ce = new Circle2D(55, 0, 7);
-        Circle2D cf = new Circle2D(60, 0, 7);
-        Circle2D cg = new Circle2D(5, 0, 20);
-
-        saba = new SplitArcBoundary(ca, Arrays.asList(cb, cc, cd, ce, cf, cg));
-        sabb = new SplitArcBoundary(cb, Arrays.asList(ca, cc, cd, ce, cf, cg));
-        sabc = new SplitArcBoundary(cc, Arrays.asList(ca, cb, cd, ce, cf, cg));
-        sabd = new SplitArcBoundary(cd, Arrays.asList(ca, cb, cc, ce, cf, cg));
-        sabe = new SplitArcBoundary(ce, Arrays.asList(ca, cb, cc, cd, cf, cg));
-        sabf = new SplitArcBoundary(cf, Arrays.asList(ca, cb, cc, cd, ce, cg));
-        sabg = new SplitArcBoundary(cg, Arrays.asList(ca, cb, cc, cd, ce, cf));
+        assertThat(actual.size(), is(1));
     }
 
     @Test
-    public void testUnion() {
+    public void testIntersectionContained() {
         TestUtils tu = new TestUtils();
-        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testUnion.svg");
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testIntersectionContained.svg");
         Graphics2D svgGenerator = svgWriter.getGraphics();
-        
-        saba.draw(svgGenerator);
-        sabb.draw(svgGenerator);
-        sabc.draw(svgGenerator);
-        sabd.draw(svgGenerator);
-        sabe.draw(svgGenerator);
-        sabf.draw(svgGenerator);
-        sabg.draw(svgGenerator);
 
-        svgGenerator.setColor(new Color(255, 0, 0));
-        Optional<SplitArcBoundary> uae = saba.union(sabe);
-        assertThat(uae, is(Optional.empty()));
+        Circle2D a = new Circle2D(0, 0, 40);
+        Circle2D b = new Circle2D(0, 0, 10);
 
-        svgGenerator.setColor(new Color(0, 255, 0));
-        Optional<SplitArcBoundary> ube = sabb.union(sabe);
-        assertThat(ube.get(), is(equalTo(sabb)));
-        ube.get().draw(svgGenerator);
+        SplitArcBoundary r_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
+        SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList(a));
+        SplitArcBoundary r_ab = new SplitArcBoundary(Arrays.asList(a,b), Arrays.asList());
+        r_a.draw(svgGenerator);
+        r_b.draw(svgGenerator);
+        r_ab.draw(svgGenerator);
 
-        svgGenerator.setColor(new Color(0, 0, 255));
-        Optional<SplitArcBoundary> ucd = sabc.union(sabd);
-        assertThat(ucd, is(not(Optional.empty())));
-        ucd.get().draw(svgGenerator);
+        assertThat(r_b, is(equalTo(r_ab)));
+        assertThat(r_a, is(not(equalTo(r_b))));
+        assertThat(r_a.bounds(r_b), is(true));
 
         svgWriter.writeSVG();
-    }
-
-    @Test
-    public void testIntersection() {
-        TestUtils tu = new TestUtils();
-        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testIntersection.svg");
-        Graphics2D svgGenerator = svgWriter.getGraphics();
-        
-        saba.draw(svgGenerator);
-        sabb.draw(svgGenerator);
-        sabc.draw(svgGenerator);
-        sabd.draw(svgGenerator);
-        sabe.draw(svgGenerator);
-        sabf.draw(svgGenerator);
-        sabg.draw(svgGenerator);
-
-        Optional<SplitArcBoundary> uae = saba.intersection(sabe);
-        assertThat(uae, is(Optional.empty()));
-
-        svgGenerator.setColor(new Color(255, 0, 255));
-        Optional<SplitArcBoundary> ube = sabb.intersection(sabe);
-        assertThat(ube, is(not(Optional.empty())));
-        assertThat(ube.get(), is(equalTo(sabe)));
-        ube.get().draw(svgGenerator);
-
-        svgGenerator.setColor(new Color(255, 0, 0));
-        Optional<SplitArcBoundary> uad = saba.intersection(sabd);
-        assertThat(uad, is(not(Optional.empty())));
-        uad.get().draw(svgGenerator);
-
-        svgGenerator.setColor(new Color(255, 255, 0));
-        Optional<SplitArcBoundary> ucd = sabc.intersection(sabd);
-        assertThat(ucd, is(not(Optional.empty())));
-        ucd.get().draw(svgGenerator);
-
-        svgWriter.writeSVG();
-    }
-
-    @Test
-    public void testLess() {
-        TestUtils tu = new TestUtils();
-        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testLess.svg");
-        Graphics2D svgGenerator = svgWriter.getGraphics();
-        
-        saba.draw(svgGenerator);
-        sabb.draw(svgGenerator);
-        sabc.draw(svgGenerator);
-        sabd.draw(svgGenerator);
-        sabe.draw(svgGenerator);
-        sabf.draw(svgGenerator);
-        sabg.draw(svgGenerator);
-
-        Optional<Collection<SplitArcBoundary>> lae = saba.less(sabe);
-        assertThat(lae, is(Optional.empty()));
-
-        Optional<Collection<SplitArcBoundary>> lad = saba.less(sabd);
-        Optional<Collection<SplitArcBoundary>> lda = sabd.less(saba);
-        assertThat(lad, is(not(Optional.empty())));
-        assertThat(lda, is(not(Optional.empty())));
-        SplitArcBoundary bad = lad.get().stream().findFirst().get();
-        SplitArcBoundary bda = lda.get().stream().findFirst().get();
-
-        svgGenerator.setColor(new Color(0, 50, 50));
-        bad.draw(svgGenerator);
-        svgGenerator.setColor(new Color(150, 150, 150));
-        bda.draw(svgGenerator);
-
-        svgWriter.writeSVG();
-    }
-
-    @Test
-    public void testRegionSplittingLess() {
-        TestUtils tu = new TestUtils();
-        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testRegionSpllittingLess.svg");
-        Graphics2D svgGenerator = svgWriter.getGraphics();
-        
-        saba.draw(svgGenerator);
-        sabb.draw(svgGenerator);
-        sabc.draw(svgGenerator);
-        sabd.draw(svgGenerator);
-        sabe.draw(svgGenerator);
-        sabf.draw(svgGenerator);
-        sabg.draw(svgGenerator);
-
-        Optional<SplitArcBoundary> uab = saba.intersection(sabb);
-        assertThat(uab, is(not(Optional.empty())));
-
-        Optional<Collection<SplitArcBoundary>> lacg = uab.get().less(sabg);
-        assertThat(lacg.get().size(), is(2));
-
-        svgGenerator.setColor(new Color(255, 0, 0));
-        for(SplitArcBoundary arc: lacg.get()) {
-            arc.draw(svgGenerator);
-        }
-
-        svgWriter.writeSVG();
-    }
-
-    @Test
-    public void testSimpleArea() {
-        Circle2D ca = new Circle2D(0,-10, 10);
-        Circle2D cb = new Circle2D(0, 10, 10);
-
-        SplitArcBoundary saba = new SplitArcBoundary(ca, Arrays.asList(cb));
-        double area = saba.getArea(Arrays.asList(cb));
-
-        assertThat(area, is(closeTo(Math.PI * 10 * 10, 0.0001)));
-    }
-
-    @Test
-    public void testVenn2Area() {
-        Circle2D ca = new Circle2D(0,-5, 10);
-        Circle2D cb = new Circle2D(0, 5, 10);
-
-        SplitArcBoundary saba = new SplitArcBoundary(ca, Arrays.asList(cb));
-        SplitArcBoundary sabb = new SplitArcBoundary(cb, Arrays.asList(ca));
-        SplitArcBoundary onlyA = saba.less(sabb).get().stream().findFirst().get(); //uugh!
-        double areaA = onlyA.getArea(Arrays.asList(cb));
-
-        double areaAB = (saba.intersection(sabb)).get().getArea(Arrays.asList());
-        assertThat(areaA + areaAB, is(closeTo(Math.PI * 10 * 10, 0.0001)));
     }
 }

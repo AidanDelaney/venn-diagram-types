@@ -6,7 +6,6 @@ import math.geom2d.domain.BoundaryPolyCurve2D;
 import math.geom2d.polygon.Polygon2D;
 import math.geom2d.polygon.SimplePolygon2D;
 
-import org.eulerdiagrams.ConcreteDiagram.ConcreteZone;
 import org.eulerdiagrams.utils.Pair;
 
 import math.geom2d.Point2D;

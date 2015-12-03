@@ -90,25 +90,27 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
     }
 
-    private Collection<SplitArcBoundary> splitBoundaries(Collection<Circle2D> inside) {
+    /* package */ static Collection<SplitArcBoundary> splitBoundaries(Collection<Circle2D> inside) {
         Set<SplitArcBoundary> sabs = new HashSet<>();
-        // For each circle, split it at each intersection point with another circle
-        for(Circle2D c1: inside) {
-            for(Circle2D c2: inside) {
-                if(c1.equals(c2)) continue;
 
-                SplitArcBoundary s1 = new SplitArcBoundary(), s2 = new SplitArcBoundary();
-                CircleArc2D ca1 = new CircleArc2D(c1, 0, Math.PI * 2.0)
-                        , ca2 = new CircleArc2D(c1, 0, Math.PI * 2.0);
-                s1.add(ca1);
-                s2.add(ca2);
+        Set<SplitArcBoundary> inputs = inside.stream().map(c -> new SplitArcBoundary() {{add(new CircleArc2D(c, 0, Math.PI * 2));}}).collect(Collectors.toSet());
+
+        // There won't be any intersections if there are 0 or 1 input circles
+        if(inputs.size() < 2) {
+            return inputs;
+        }
+
+        // For each circle, split it at each intersection point with another circle
+        for(SplitArcBoundary s1: inputs) {
+            for(SplitArcBoundary s2: inputs) {
+                if(s1.equals(s2)) continue;
 
                 Collection<Point2D> ps = s1.intersectionPoints(s2);
                 ps.forEach(p -> s1.split(p));
                 sabs.add(s1);
             }
         }
-        return null;
+        return sabs;
     }
 
     /**
