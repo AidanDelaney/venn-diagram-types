@@ -124,4 +124,25 @@ public class TestSplitArcBoundary {
 
         svgWriter.writeSVG();
     }
+
+    @Test
+    public void testDisconnected() {
+        Circle2D a = new Circle2D(-20, 0, 10);
+        Circle2D b = new Circle2D(20, 0, 10);
+
+        SplitArcBoundary z_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
+        SplitArcBoundary z_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList(a));
+
+        Optional<SplitArcBoundary> ix_a = z_a.intersection(z_b);
+        Optional<SplitArcBoundary> ix_b = z_b.intersection(z_a);
+
+        assertThat(ix_a, is(equalTo(Optional.empty())));
+        assertThat(ix_b, is(equalTo(Optional.empty())));
+
+        Optional<SplitArcBoundary> less_a = z_a.less(b);
+        Optional<SplitArcBoundary> less_b = z_b.less(a);
+
+        assertThat(less_a.get(), is(equalTo(z_a)));
+        assertThat(less_b.get(), is(equalTo(z_b)));
+    }
 }
