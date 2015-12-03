@@ -50,6 +50,8 @@ import math.geom2d.polygon.SimplePolygon2D;
  */
 public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
 
+    private Collection<Circle2D> outside = new HashSet<>();
+
     /**
      * Creates a non-empty boundary.  The boundary consists of circle and is
      * split at each intersection point with others.  It is vitally important
@@ -60,12 +62,13 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      */
     public SplitArcBoundary(Collection<Circle2D> inside, Collection<Circle2D> outside) throws IllegalArgumentException{
         super();
+        this.outside = outside;
 
         if(inside.isEmpty()) {
             throw new IllegalArgumentException();
         }
 
-        Collection<SplitArcBoundary> ins = splitBoundaries(inside);
+        Collection<SplitArcBoundary> ins = splitBoundaries(inside, outside);
 
         // Get one of the boundaries in in and add all it's curves to this
         SplitArcBoundary first = ins.stream().findAny().get(); // we know there's at least one.
@@ -90,10 +93,11 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
     }
 
-    /* package */ static Collection<SplitArcBoundary> splitBoundaries(Collection<Circle2D> inside) {
+    /* package */ static Collection<SplitArcBoundary> splitBoundaries(Collection<Circle2D> inside, Collection<Circle2D> outside) {
         Set<SplitArcBoundary> sabs = new HashSet<>();
 
         Set<SplitArcBoundary> inputs = inside.stream().map(c -> new SplitArcBoundary() {{add(new CircleArc2D(c, 0, Math.PI * 2));}}).collect(Collectors.toSet());
+        inputs.forEach(i -> i.outside = outside);
 
         // There won't be any intersections if there are 0 or 1 input circles
         if(inputs.size() < 2) {
@@ -165,7 +169,13 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
             return Optional.empty();
         }
 
-        return Optional.of(fromCollection(arcs, arcs.stream().filter(x -> x.curvature(0) > 0).findFirst())); // get the first CCW curve
+        // The intersection of this and other is outside the union of all circles
+        // both are outside.
+        Collection<Circle2D> outs = new HashSet<>();
+        outs.addAll(outside);
+        outs.addAll(other.outside);
+
+        return Optional.of(fromCollection(arcs, arcs.stream().filter(x -> x.curvature(0) > 0).findFirst(), outs)); // get the first CCW curve
     }
 
     /**
@@ -204,7 +214,12 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         // add the intersection arc -- Note: there can be only one.
         arcs.addAll(osab.curves.stream().filter(a -> this.bounds(a)).collect(Collectors.toSet()));
 
-        SplitArcBoundary boundary = SplitArcBoundary.fromCollection(arcs, first);
+        // The `less` of this and other is outside whatever this is outside and other
+        // both are outside.
+        Collection<Circle2D> outs = new HashSet<>();
+        outs.addAll(outside);
+        outs.add(other);
+        SplitArcBoundary boundary = SplitArcBoundary.fromCollection(arcs, first, outs);
         return Optional.of(boundary);
     }
 
@@ -282,8 +297,9 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      *              arcs are CCW - one of these needs to be the start arc.
      * @return
      */
-    protected static SplitArcBoundary fromCollection(Collection<CircleArc2D> arcs, Optional<CircleArc2D> start) {
+    protected static SplitArcBoundary fromCollection(Collection<CircleArc2D> arcs, Optional<CircleArc2D> start, Collection<Circle2D> outside) {
         SplitArcBoundary zone = new SplitArcBoundary();
+        zone.outside = outside;
         Collection<CircleArc2D> as = new Vector<>();
         as.addAll(arcs);
 
@@ -331,7 +347,7 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
      * @param out The circles of which this boundary is outside.
      * @return
      */
-    public double getArea(Collection<Circle2D> out) {
+    public double getArea() {
         if(this.isEmpty()) return 0.0;
 
         // if only one arc, then PI* r^2
@@ -355,7 +371,7 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         for(CircleArc2D arc: this) {
             Circle2D sc = arc.supportingCircle();
 
-            if(out.stream().noneMatch(c -> c.equals(arc.supportingCircle()))) {
+            if(outside.stream().noneMatch(c -> c.equals(arc.supportingCircle()))) {
                 area += Math.abs(arc.getChordArea());
             } else {
                 area -= Math.abs(arc.getChordArea());

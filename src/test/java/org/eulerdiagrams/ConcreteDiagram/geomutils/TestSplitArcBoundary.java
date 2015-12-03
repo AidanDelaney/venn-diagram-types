@@ -25,7 +25,7 @@ public class TestSplitArcBoundary {
 
     @Test
     public void testSplitBoundary() {
-        Collection<SplitArcBoundary> actual = SplitArcBoundary.splitBoundaries(Arrays.asList(new Circle2D(0, 0, 10)));
+        Collection<SplitArcBoundary> actual = SplitArcBoundary.splitBoundaries(Arrays.asList(new Circle2D(0, 0, 10)), Arrays.asList());
 
         assertThat(actual.size(), is(1));
     }
@@ -92,7 +92,7 @@ public class TestSplitArcBoundary {
         r_b.draw(svgGenerator);
         r_ab.draw(svgGenerator);
 
-        fail(); // need to put some conditions in here
+        assertThat(r_a.getArea() + r_ab.getArea(), is(closeTo(40 * 40 * Math.PI, 0.1)));
 
         svgWriter.writeSVG();
     }
@@ -111,12 +111,16 @@ public class TestSplitArcBoundary {
         SplitArcBoundary r_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList());
         SplitArcBoundary z_a = r_a.less(b).get();
         SplitArcBoundary z_b = r_b.less(a).get();
+        SplitArcBoundary z_ab = new SplitArcBoundary(Arrays.asList(a,b), Arrays.asList());
         //r_a.draw(svgGenerator);
         //r_b.draw(svgGenerator);
         z_a.draw(svgGenerator);
         z_b.draw(svgGenerator);
 
-        fail(); // need to put some conditions in here
+        assertThat(r_a.getArea(), is(closeTo(40 * 40 * Math.PI, 0.1)));
+        assertThat(r_b.getArea(), is(closeTo(40 * 40 * Math.PI, 0.1)));
+        assertThat(z_a.getArea() + z_ab.getArea(), is(closeTo(r_a.getArea(), 0.1)));
+        assertThat(z_b.getArea() + z_ab.getArea(), is(closeTo(r_b.getArea(), 0.1)));
 
         svgWriter.writeSVG();
     }
