@@ -3,12 +3,9 @@ package org.eulerdiagrams.ConcreteDiagram;
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 
-import java.util.Arrays;
-
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.junit.Test;
 
-import math.geom2d.Point2D;
 import math.geom2d.conic.Circle2D;
 
 public class TestConcreteCircle {

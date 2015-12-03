@@ -9,7 +9,6 @@ import java.util.*;
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
 import org.eulerdiagrams.AbstractDiagram.AbstractZone;
-import org.eulerdiagrams.utils.NAryTree;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 import org.eulerdiagrams.vennom.graph.Edge;

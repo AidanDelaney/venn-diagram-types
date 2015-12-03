@@ -1,20 +1,12 @@
 package org.eulerdiagrams.ConcreteDiagram.geomutils;
 
 import math.geom2d.conic.Circle2D;
-import math.geom2d.conic.CircleArc2D;
 
-import org.eulerdiagrams.ConcreteDiagram.Cluster;
-import org.eulerdiagrams.ConcreteDiagram.ConcreteDiagram;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.TestUtils.SVGWriter;
-import org.eulerdiagrams.utils.NAryTree;
-import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
