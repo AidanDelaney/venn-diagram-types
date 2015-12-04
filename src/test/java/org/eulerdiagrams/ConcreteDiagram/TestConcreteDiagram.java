@@ -78,4 +78,21 @@ public class TestConcreteDiagram {
             assertThat(areas.get(z), isOneOf(Double.POSITIVE_INFINITY, Math.PI * 49.0));
         }
     }
+
+    @Test
+    public void testSimpleTunnel() {
+        Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
+        Circle2D circleB = new Circle2D(new Point2D(-5, 0), 2.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA);
+        ConcreteCircle cb = new ConcreteCircle(b, circleB);
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        double areaB = 2.0 * 2.0 * Math.PI;
+        double areaA = (7.0 * 7.0 * Math.PI) - areaB;
+        for(AbstractZone z: areas.keySet()) {
+            assertThat(areas.get(z), isOneOf(areaA, areaB));
+        }
+    }
 }

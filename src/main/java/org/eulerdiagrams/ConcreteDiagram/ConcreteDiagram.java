@@ -2,6 +2,7 @@ package org.eulerdiagrams.ConcreteDiagram;
 
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
@@ -70,6 +71,17 @@ public class ConcreteDiagram {
                 } else {
                     zoneMap.put(p.car, new HashSet<SplitArcBoundary>(){{add(p.cdr.get());}});
                 }
+                insert(p.cdr.get());
+            }
+        }
+    }
+
+    public void insert(SplitArcBoundary sab) {
+        Collection<SplitArcBoundary> containedIn = zoneMap.values().stream().flatMap(c -> c.stream()).filter(b -> b.bounds(sab) && !b.equals(sab)).collect(Collectors.toSet());
+
+        for(SplitArcBoundary b: containedIn) {
+            if(!children.containsKey(b)) {
+                children.put(b, Arrays.asList(sab));
             }
         }
     }
@@ -78,8 +90,17 @@ public class ConcreteDiagram {
         Map<AbstractZone, Double> areas = new HashMap<>();
 
         for(AbstractZone z: zoneMap.keySet()) {
-            double d = zoneMap.get(z).stream().mapToDouble(SplitArcBoundary::getArea).sum();
-            areas.put(z, d);
+            Collection<SplitArcBoundary> regions = zoneMap.get(z);
+            double regionalArea = regions.stream().mapToDouble(SplitArcBoundary::getArea).sum();
+            double holeArea = 0.0;
+
+            // Get all the children of regions
+            for(SplitArcBoundary r : regions) {
+                if(children.containsKey(r)) {
+                    holeArea += children.get(r).stream().mapToDouble(SplitArcBoundary::getArea).sum();
+                }
+            }
+            areas.put(z, regionalArea - holeArea);
         }
         return areas;
     }
