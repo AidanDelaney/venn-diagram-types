@@ -392,6 +392,8 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         
         if(! (o instanceof SplitArcBoundary)) return false;
 
+        if(o == this) return true; // reference equality
+
         SplitArcBoundary other = (SplitArcBoundary) o;
         if(this.curves.size() != other.curves.size()) return false;
 
