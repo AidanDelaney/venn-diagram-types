@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eulerdiagrams</groupId>
   <artifactId>types</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>types</name>
   <description>Abstract and Concrete diagram types for Eulerdiagrams work.</description>
 
