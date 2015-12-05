@@ -137,4 +137,30 @@ public class TestSplitArcBoundary {
         assertThat(less_a.get(), is(equalTo(z_a)));
         assertThat(less_b.get(), is(equalTo(z_b)));
     }
+
+    @Test
+    public void testComplexZone() {
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testComplexZone.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        Circle2D a = new Circle2D(-10, 0, 12);
+        Circle2D b = new Circle2D(10, 0, 12);
+        Circle2D c = new Circle2D(-7, 0, 7);
+
+        SplitArcBoundary z_a_bc = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b, c));
+        z_a_bc.draw(svgGenerator);
+        assertThat(z_a_bc.getArea(), is(closeTo(301.0, 1.0)));
+
+        SplitArcBoundary z_a_b = new SplitArcBoundary(Arrays.asList(a), Arrays.asList(b));
+        z_a_b.draw(svgGenerator);
+
+        SplitArcBoundary z_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList());
+        z_a.draw(svgGenerator);
+
+        SplitArcBoundary z_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList());
+        z_b.draw(svgGenerator);
+
+        svgWriter.writeSVG();
+    }
 }

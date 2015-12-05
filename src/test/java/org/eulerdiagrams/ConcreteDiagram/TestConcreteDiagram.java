@@ -95,4 +95,40 @@ public class TestConcreteDiagram {
             assertThat(areas.get(z), isOneOf(areaA, areaB));
         }
     }
+
+    @Test
+    public void testComplexTunnel() {
+        Circle2D circleA = new Circle2D(new Point2D(-5, 0), 10.0);
+        Circle2D circleB = new Circle2D(new Point2D(-5, 0), 7.0);
+        Circle2D circleC = new Circle2D(new Point2D(-5, 0), 2.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA);
+        ConcreteCircle cb = new ConcreteCircle(b, circleB);
+        ConcreteCircle cc = new ConcreteCircle(c, circleC);
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b, c)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb, cc));
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        double areaC = 2.0 * 2.0 * Math.PI;
+        double areaB = (7.0 * 7.0 * Math.PI) - areaC;
+        double areaA = (10.0 * 10.0 * Math.PI) - areaB;
+        for(AbstractZone z: areas.keySet()) {
+            assertThat(areas.get(z), isOneOf(areaA, areaB, areaC));
+        }
+    }
+
+    @Test
+    public void testSplitZone() {
+        Circle2D circleA = new Circle2D(new Point2D(-2, 0), 4.0);
+        Circle2D circleB = new Circle2D(new Point2D(-2, 0), 4.0);
+        Circle2D circleC = new Circle2D(new Point2D(0, 0), 2.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA);
+        ConcreteCircle cb = new ConcreteCircle(b, circleB);
+        ConcreteCircle cc = new ConcreteCircle(c, circleC);
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b, c)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb, cc));
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        // There should be 5 zones as cc splits the intersection of ca and cb.
+        assertThat(areas.keySet().size(), is(5));
+    }
 }
