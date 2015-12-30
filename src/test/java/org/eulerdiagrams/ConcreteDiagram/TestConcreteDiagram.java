@@ -9,6 +9,7 @@ import java.util.*;
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
 import org.eulerdiagrams.AbstractDiagram.AbstractZone;
+import org.eulerdiagrams.vennom.apCircles.ConcreteContour;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 import org.eulerdiagrams.vennom.graph.Edge;
@@ -130,5 +131,46 @@ public class TestConcreteDiagram {
 
         // There should be 5 zones as cc splits the intersection of ca and cb.
         assertThat(areas.keySet().size(), is(5));
+    }
+
+    /**
+     * This example is the vennom output on a specific instance of Venn 4.
+     */
+    @Test
+    public void testVennomOutput_001() {
+        AbstractContour a = new AbstractContour("A");
+        AbstractContour b = new AbstractContour("B");
+        AbstractContour c = new AbstractContour("C");
+        AbstractContour d = new AbstractContour("D");
+        ConcreteCircle c1 = new ConcreteCircle(a, new Circle2D(227.0044, 246.0087, 9.690274));
+        ConcreteCircle c2 = new ConcreteCircle(b, new Circle2D(233.7481, 259.2041, 9.690274));
+        ConcreteCircle c3 = new ConcreteCircle(c, new Circle2D(235.7133, 249.7398, 10.01337));
+        ConcreteCircle c4 = new ConcreteCircle(d, new Circle2D(233.5342, 256.0473, 9.690274));
+
+        AbstractDiagram ad = new AbstractDiagram(new HashSet(){{add(a);add(b);add(c);add(d);}});
+
+        ConcreteDiagram cd = new ConcreteDiagram(ad, Arrays.asList(c1, c2, c3, c4));
+        Map<AbstractZone, Double> m = cd.getZoneAreaMap();
+
+        assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
+    }
+
+    @Test
+    public void testCrossedVenn2() {
+        AbstractContour a = new AbstractContour("A");
+        AbstractContour b = new AbstractContour("B");
+        AbstractContour c = new AbstractContour("C");
+        AbstractContour d = new AbstractContour("D");
+        ConcreteCircle c1 = new ConcreteCircle(a, new Circle2D(0, -10, 12));
+        ConcreteCircle c2 = new ConcreteCircle(b, new Circle2D(0, 10, 12));
+        ConcreteCircle c3 = new ConcreteCircle(c, new Circle2D(-10, 0, 12));
+        ConcreteCircle c4 = new ConcreteCircle(d, new Circle2D(10, 0, 12));
+
+        AbstractDiagram ad = new AbstractDiagram(new HashSet(){{add(a);add(b);add(c);add(d);}});
+
+        ConcreteDiagram cd = new ConcreteDiagram(ad, Arrays.asList(c1, c2, c3, c4));
+        Map<AbstractZone, Double> m = cd.getZoneAreaMap();
+
+        assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
     }
 }
