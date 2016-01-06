@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import math.geom2d.conic.CircleArc2D;
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
@@ -66,22 +67,36 @@ public class ConcreteDiagram {
         ConcreteZoneVennSetIterator czvsi = new ConcreteZoneVennSetIterator(circles);
         for(Pair<AbstractZone, Optional<SplitArcBoundary>> p : czvsi) {
             if(p.cdr.isPresent()) {
+                insert(p.cdr.get());
                 if(zoneMap.containsKey(p.car)) {
                     zoneMap.get(p.car).add(p.cdr.get());
                 } else {
                     zoneMap.put(p.car, new HashSet<SplitArcBoundary>(){{add(p.cdr.get());}});
                 }
-                insert(p.cdr.get());
             }
         }
     }
 
+    /**
+     * Is this SplitArcBoundary a "hole" in a previously found SplitArcBoundary?  If another sab contains each of the
+     * underlying circles that form `sab` then `sab` is a hole in that boundary.
+     * @param sab
+     */
     public void insert(SplitArcBoundary sab) {
-        Collection<SplitArcBoundary> containedIn = zoneMap.values().stream().flatMap(c -> c.stream()).filter(b -> b.bounds(sab) && !b.equals(sab)).collect(Collectors.toSet());
-
-        for(SplitArcBoundary b: containedIn) {
-            if(!children.containsKey(b)) {
-                children.put(b, Arrays.asList(sab));
+        for(SplitArcBoundary b: this.zoneMap.values().stream().flatMap(x -> x.stream()).collect(Collectors.toSet())) {
+            // SplitArcBoundary doesn't support .stream(), so old-school setting of boolean flag and looping
+            boolean flag = true;
+            for(CircleArc2D c: sab) {
+                if(!b.bounds(c.supportingCircle())) {
+                    flag = false;
+                }
+            }
+            if(flag) { // sab is a hole of b
+                if(children.containsKey(b)) {
+                    children.get(b).add(sab);
+                } else {
+                    children.put(b, new HashSet<SplitArcBoundary>(){{add(sab);}});
+                }
             }
         }
     }

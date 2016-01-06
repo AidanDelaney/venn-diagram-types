@@ -20,8 +20,6 @@ public class TestVennSetIterator {
     public void testBasicIterator() {
         VennSetIterator it = new VennSetIterator(Arrays.asList());
 
-        AbstractZone z = it.next();
-        assertThat(z, is(equalTo(new AbstractZone(new HashSet<>(), new HashSet<>()))));
         assertThat(it.hasNext(), is(false));
     }
 
@@ -36,6 +34,6 @@ public class TestVennSetIterator {
             logger.info(z.toString());
             i++;
         }
-        assertThat(i, is((int) Math.pow(2,3)));
+        assertThat(i, is((int) Math.pow(2,3) - 1));
     }
 }

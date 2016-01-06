@@ -9,6 +9,9 @@ import java.util.*;
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
 import org.eulerdiagrams.AbstractDiagram.AbstractZone;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
+import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.apCircles.ConcreteContour;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
@@ -89,6 +92,13 @@ public class TestConcreteDiagram {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
         Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        ConcreteZoneVennSetIterator czvsi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb));
+        assertThat(czvsi.hasNext(), is(true));
+        Pair<AbstractZone, Optional<SplitArcBoundary>> pzo = czvsi.next();
+        assertThat(czvsi.hasNext(), is(true));
+        pzo = czvsi.next();
+        assertThat(czvsi.hasNext(), is(false));
 
         double areaB = 2.0 * 2.0 * Math.PI;
         double areaA = (7.0 * 7.0 * Math.PI) - areaB;
