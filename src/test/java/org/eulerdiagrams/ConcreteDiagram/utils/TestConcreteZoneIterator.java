@@ -58,7 +58,7 @@ public class TestConcreteZoneIterator {
         AbstractContour a = new AbstractContour("A");
         AbstractContour b = new AbstractContour("B");
         Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
-        Circle2D circleB = new Circle2D(new Point2D(-5, 0), 7.0);
+        Circle2D circleB = new Circle2D(new Point2D(5, 0), 7.0);
         ConcreteCircle ca = new ConcreteCircle(a, circleA);
         ConcreteCircle cb = new ConcreteCircle(b, circleB);
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
@@ -80,7 +80,7 @@ public class TestConcreteZoneIterator {
         AbstractContour b = new AbstractContour("B");
         AbstractContour c = new AbstractContour("C");
         Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
-        Circle2D circleB = new Circle2D(new Point2D(-5, 0), 7.0);
+        Circle2D circleB = new Circle2D(new Point2D(5, 0), 7.0);
         Circle2D circleC = new Circle2D(new Point2D(0, 5), 7.0);
         ConcreteCircle ca = new ConcreteCircle(a, circleA);
         ConcreteCircle cb = new ConcreteCircle(b, circleB);

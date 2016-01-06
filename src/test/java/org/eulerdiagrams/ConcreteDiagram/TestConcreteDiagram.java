@@ -65,6 +65,24 @@ public class TestConcreteDiagram {
     }
 
     @Test
+    public void testVenn2() {
+        Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
+        Circle2D circleB = new Circle2D(new Point2D(5, 0), 7.0);
+        ConcreteCircle ca = new ConcreteCircle(a, circleA);
+        ConcreteCircle cb = new ConcreteCircle(b, circleB);
+        AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
+        ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
+
+        Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+
+        double areaA = 0, areaB = 0, areaAB = 0;
+
+        for(AbstractZone z: areas.keySet()) {
+            assertThat(areas.get(z), isOneOf(areaA, areaB, areaAB));
+        }
+    }
+
+    @Test
     public void testSingleCircle() {
         Circle2D circleA = new Circle2D(new Point2D(-5, 0), 7.0);
         ConcreteCircle ca = new ConcreteCircle(a, circleA);
@@ -74,7 +92,7 @@ public class TestConcreteDiagram {
 
         // For simple diagrams, this is easier than picking out a specific zone
         for(AbstractZone z: areas.keySet()) {
-            assertThat(areas.get(z), isOneOf(Double.POSITIVE_INFINITY, Math.PI * 49.0));
+            assertThat(areas.get(z), is(Math.PI * 49.0));
         }
     }
 
@@ -125,7 +143,7 @@ public class TestConcreteDiagram {
     @Test
     public void testSplitZone() {
         Circle2D circleA = new Circle2D(new Point2D(-2, 0), 4.0);
-        Circle2D circleB = new Circle2D(new Point2D(-2, 0), 4.0);
+        Circle2D circleB = new Circle2D(new Point2D(2, 0), 4.0);
         Circle2D circleC = new Circle2D(new Point2D(0, 0), 2.0);
         ConcreteCircle ca = new ConcreteCircle(a, circleA);
         ConcreteCircle cb = new ConcreteCircle(b, circleB);
