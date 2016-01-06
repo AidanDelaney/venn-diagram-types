@@ -50,7 +50,6 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -82,7 +81,40 @@
             <testFailureIgnore>true</testFailureIgnore>
           </configuration>
         </plugin>
+        <!-- Code Coverage -->
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.7.5.201505241946</version>
+          <executions>
+            <execution>
+              <id>pre-unit-test</id>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>post-unit-test</id>
+              <phase>test</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>jacoco-initialize</id>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>jacoco-site</id>
+              <phase>package</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
-    </pluginManagement>
   </build>
 </project>
