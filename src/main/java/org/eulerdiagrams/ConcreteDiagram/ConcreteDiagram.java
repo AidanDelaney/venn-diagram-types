@@ -84,14 +84,14 @@ public class ConcreteDiagram {
      */
     public void insert(SplitArcBoundary sab) {
         for(SplitArcBoundary b: this.zoneMap.values().stream().flatMap(x -> x.stream()).collect(Collectors.toSet())) {
-            // SplitArcBoundary doesn't support .stream(), so old-school setting of boolean flag and looping
-            boolean flag = true;
+            boolean isContained = true;
             for(CircleArc2D c: sab) {
                 if(!b.bounds(c.supportingCircle())) {
-                    flag = false;
+                    isContained = false;
                 }
             }
-            if(flag) { // sab is a hole of b
+
+            if(isContained) { // sab is a hole of b
                 if(children.containsKey(b)) {
                     children.get(b).add(sab);
                 } else {

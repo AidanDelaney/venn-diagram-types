@@ -194,6 +194,8 @@ public class TestConcreteDiagram {
         ConcreteDiagram cd = new ConcreteDiagram(ad, Arrays.asList(c1, c2, c3, c4));
         Map<AbstractZone, Double> m = cd.getZoneAreaMap();
 
+        m.entrySet().forEach(e -> logger.info(e.getKey() + " ->" + e.getValue()));
+
         assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
     }
 }

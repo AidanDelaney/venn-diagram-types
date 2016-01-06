@@ -5,15 +5,22 @@ import math.geom2d.conic.Circle2D;
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
+import org.eulerdiagrams.utils.Pair;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 
 public class TestConcreteZoneIterator {
+    private final static Logger logger = LoggerFactory.getLogger(TestConcreteZoneIterator.class);
+
     @Test
     public void testSingleContour() {
         AbstractContour a = new AbstractContour("A");
@@ -117,7 +124,11 @@ public class TestConcreteZoneIterator {
 
         int size = 0;
         while(czvi.hasNext()) {
-            czvi.next();
+            Pair<AbstractZone, Optional<SplitArcBoundary>> p = czvi.next();
+            logger.info(p.car.toString() + " -> " + p.cdr.get().getArea());
+            if(p.cdr.isPresent()) {
+                assertThat(p.cdr.get().getArea(), is(greaterThanOrEqualTo(0.0)));
+            }
             size++;
         }
         assertThat(size, is(13));
