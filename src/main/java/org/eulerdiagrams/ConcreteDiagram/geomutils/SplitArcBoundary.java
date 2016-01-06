@@ -277,6 +277,21 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
     }
 
     /**
+     * Is this circle containd within the boundary.
+     * @return
+     */
+    public boolean bounds(Circle2D circle) {
+        for(CircleArc2D arc: this.curves) {
+            // ensure that the distance between the arc midpoint and arc end point to the centre of the circle is
+            // greater than the radius.
+            if((circle.center().distance(arc.lastPoint()) <= circle.radius()) || circle.center().distance(Utils.midpoint(arc)) <= circle.radius()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Does this boundary contain the other boundary within in it.  The
      * definition of within, in this case, also includes being on the boundary.
      * @param other
