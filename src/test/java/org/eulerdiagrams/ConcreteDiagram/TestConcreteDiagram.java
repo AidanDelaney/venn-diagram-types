@@ -2,26 +2,21 @@ package org.eulerdiagrams.ConcreteDiagram;
 
 import static org.junit.Assert.*;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.*;
 
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
 import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
 import org.eulerdiagrams.AbstractDiagram.AbstractZone;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
 import org.eulerdiagrams.utils.Pair;
-import org.eulerdiagrams.vennom.apCircles.ConcreteContour;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 import org.eulerdiagrams.vennom.graph.Edge;
 import math.geom2d.Point2D;
-import math.geom2d.Shape2D;
 import math.geom2d.conic.Circle2D;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +88,7 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
         Map<AbstractZone, Double> areas = d.getZoneAreaMap();
 
-        ConcreteZoneVennSetIterator czvsi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb));
+        ConcreteZoneIterator czvsi = new ConcreteZoneIterator(Arrays.asList(ca, cb));
         assertThat(czvsi.hasNext(), is(true));
         Pair<AbstractZone, Optional<SplitArcBoundary>> pzo = czvsi.next();
         assertThat(czvsi.hasNext(), is(true));

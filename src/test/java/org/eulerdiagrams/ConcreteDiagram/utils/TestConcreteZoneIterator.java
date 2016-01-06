@@ -4,7 +4,7 @@ import math.geom2d.Point2D;
 import math.geom2d.conic.Circle2D;
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.*;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class TestConcreteZoneIterator {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca));
 
-        ConcreteZoneVennSetIterator czvi = new ConcreteZoneVennSetIterator(Arrays.asList(ca));
+        ConcreteZoneIterator czvi = new ConcreteZoneIterator(Arrays.asList(ca));
 
         int size = 0;
         while(czvi.hasNext()) {
@@ -43,7 +43,7 @@ public class TestConcreteZoneIterator {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
 
-        ConcreteZoneVennSetIterator czvi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb));
+        ConcreteZoneIterator czvi = new ConcreteZoneIterator(Arrays.asList(ca, cb));
 
         int size = 0;
         while(czvi.hasNext()) {
@@ -64,7 +64,7 @@ public class TestConcreteZoneIterator {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb));
 
-        ConcreteZoneVennSetIterator czvi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb));
+        ConcreteZoneIterator czvi = new ConcreteZoneIterator(Arrays.asList(ca, cb));
 
         int size = 0;
         while(czvi.hasNext()) {
@@ -88,7 +88,7 @@ public class TestConcreteZoneIterator {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a, b, c)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb, cc));
 
-        ConcreteZoneVennSetIterator czvi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb, cc));
+        ConcreteZoneIterator czvi = new ConcreteZoneIterator(Arrays.asList(ca, cb, cc));
 
         int size = 0;
         while(czvi.hasNext()) {
@@ -113,7 +113,7 @@ public class TestConcreteZoneIterator {
 
         ConcreteDiagram diagram = new ConcreteDiagram(ad, Arrays.asList(ca, cb, cc, cd));
 
-        ConcreteZoneVennSetIterator czvi = new ConcreteZoneVennSetIterator(Arrays.asList(ca, cb, cc, cd));
+        ConcreteZoneIterator czvi = new ConcreteZoneIterator(Arrays.asList(ca, cb, cc, cd));
 
         int size = 0;
         while(czvi.hasNext()) {

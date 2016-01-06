@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import math.geom2d.conic.CircleArc2D;
 import org.eulerdiagrams.AbstractDiagram.*;
-import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneVennSetIterator;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
 import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.graph.Graph;
@@ -64,7 +64,7 @@ public class ConcreteDiagram {
 
     private void generateClusters(List<ConcreteCircle> circles) {
         // Generate the Venn set of the input circles.
-        ConcreteZoneVennSetIterator czvsi = new ConcreteZoneVennSetIterator(circles);
+        ConcreteZoneIterator czvsi = new ConcreteZoneIterator(circles);
         for(Pair<AbstractZone, Optional<SplitArcBoundary>> p : czvsi) {
             if(p.cdr.isPresent()) {
                 insert(p.cdr.get());
