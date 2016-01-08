@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
 
@@ -161,6 +162,45 @@ public class TestSplitArcBoundary {
         SplitArcBoundary z_b = new SplitArcBoundary(Arrays.asList(b), Arrays.asList());
         z_b.draw(svgGenerator);
 
+        svgWriter.writeSVG();
+    }
+
+    @Test
+    public void testFromComplexLiveData() {
+        //{\"circles\":[{\"x\":228.449475890545,\"y\":280.096392174177,\"radius\":44.6209405781592,\"label\":\"A\"},
+        // {\"x\":318.264012185677,\"y\":264.62309486689,\"radius\":92.0355604168131,\"label\":\"B\"},
+        // {\"x\":262.169922300299,\"y\":243.502873710095,\"radius\":72.7213892129234,\"label\":\"D\"},
+        // {\"x\":208.206953111216,\"y\":194.551163856882,\"radius\":103.539164844922,\"label\":\"M\"},
+        // {\"x\":290.298719607572,\"y\":193.46204146812,\"radius\":74.3939109811923,\"label\":\"S\"},
+        // {\"x\":259.61091690469,\"y\":155.764433923835,\"radius\":123.909956662389,\"label\":\"U\"}]}
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("TestSplitArcBoundary::testFromComplexLiveData.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        Circle2D a = new Circle2D(228.449475890545, 280.096392174177, 44.6209405781592);
+        Circle2D s = new Circle2D(290.298719607572, 193.46204146812, 74.3939109811923);
+        Circle2D d = new Circle2D(262.169922300299, 243.502873710095, 72.7213892129234);
+        Circle2D u = new Circle2D(259.61091690469, 155.764433923835, 123.909956662389);
+
+        Circle2D b = new Circle2D(318.264012185677, 264.62309486689, 92.0355604168131);
+        Circle2D m = new Circle2D(208.206953111216, 194.551163856882, 103.539164844922);
+
+        //SplitArcBoundary z_asdu_bm = new SplitArcBoundary(Arrays.asList(a, s, d, u), Arrays.asList(b, m));
+        //z_asdu_bm.draw(svgGenerator);
+
+
+        SplitArcBoundary z_a = new SplitArcBoundary(Arrays.asList(a), Arrays.asList());
+        z_a.draw(svgGenerator);
+        SplitArcBoundary z_as = new SplitArcBoundary(Arrays.asList(a, s), Arrays.asList());
+        z_as.draw(svgGenerator);
+        SplitArcBoundary z_asd = new SplitArcBoundary(Arrays.asList(a, s, d), Arrays.asList());
+        z_asd.draw(svgGenerator);
+        SplitArcBoundary z_asdu = new SplitArcBoundary(Arrays.asList(a, s, d, u), Arrays.asList());
+        z_asdu.draw(svgGenerator);
+
+        Collection<SplitArcBoundary> boundaries = SplitArcBoundary.splitBoundaries(Arrays.asList(a, s, d), Arrays.asList());
+        assertThat(boundaries.size(), is(3));
+        assertThat(boundaries.stream().map(x -> x.size()).collect(Collectors.toList()), allOf(is(4)));
         svgWriter.writeSVG();
     }
 }

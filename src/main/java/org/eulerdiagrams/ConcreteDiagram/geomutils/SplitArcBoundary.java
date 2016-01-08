@@ -106,13 +106,14 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
 
         // For each circle, split it at each intersection point with another circle
         for(SplitArcBoundary s1: inputs) {
+            Collection<Point2D> ps = new Vector<>();
             for(SplitArcBoundary s2: inputs) {
                 if(s1.equals(s2)) continue;
 
-                Collection<Point2D> ps = s1.intersectionPoints(s2);
-                ps.forEach(p -> s1.split(p));
-                sabs.add(s1);
+                ps.addAll(s1.intersectionPoints(s2));
             }
+            ps.forEach(p -> s1.split(p));
+            sabs.add(s1);
         }
         return sabs;
     }
