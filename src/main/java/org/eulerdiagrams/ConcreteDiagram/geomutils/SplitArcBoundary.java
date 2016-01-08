@@ -86,6 +86,13 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         }
 
         for(Circle2D other : outside) {
+
+            // is this contained in this circle?
+            boolean contained = this.curves.stream().allMatch(c -> (c.firstPoint().distance(other.center()) < other.radius()) && (Utils.midpoint(c).distance(other.center()) < other.radius()));
+            if(contained) {
+                throw new IllegalArgumentException("The intersecting circles define a region contained in an external circle " + other);
+            }
+
             Optional<SplitArcBoundary> sab = this.less(other);
             if(sab.isPresent()) {
                 this.curves = sab.get().curves;

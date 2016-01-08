@@ -200,7 +200,11 @@ public class TestSplitArcBoundary {
 
         Collection<SplitArcBoundary> boundaries = SplitArcBoundary.splitBoundaries(Arrays.asList(a, s, d), Arrays.asList());
         assertThat(boundaries.size(), is(3));
-        assertThat(boundaries.stream().map(x -> x.size()).collect(Collectors.toList()), allOf(is(4)));
+        assertThat(boundaries.stream().map(x -> x.size()).collect(Collectors.toList()), allOf(is(5)));
+
+
+        SplitArcBoundary z_asdb = new SplitArcBoundary(Arrays.asList(a, s, d, b), Arrays.asList(u, m));
+
         svgWriter.writeSVG();
     }
 }
