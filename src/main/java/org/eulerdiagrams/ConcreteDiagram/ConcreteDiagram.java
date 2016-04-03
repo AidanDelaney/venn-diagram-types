@@ -5,15 +5,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import math.geom2d.conic.CircleArc2D;
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
 import org.eulerdiagrams.AbstractDiagram.*;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
+import org.eulerdiagrams.utils.DiscreteAreaMap;
 import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
 
 import math.geom2d.Point2D;
 import math.geom2d.conic.Circle2D;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class ConcreteDiagram {
 
@@ -21,6 +27,8 @@ public class ConcreteDiagram {
 
     private Map<AbstractZone, Collection<SplitArcBoundary>> zoneMap = new HashMap<>();
     private Map<SplitArcBoundary, Collection<SplitArcBoundary>> children = new HashMap<>();
+
+    private DiscreteAreaMap dm;
 
     public ConcreteDiagram(Graph g, AbstractDiagram ad) {
         abstractDiagram = ad;
@@ -75,6 +83,7 @@ public class ConcreteDiagram {
                 }
             }
         }
+        dm = new DiscreteAreaMap(circles);
     }
 
     /**
@@ -118,5 +127,34 @@ public class ConcreteDiagram {
             areas.put(z, regionalArea - holeArea);
         }
         return areas;
+    }
+
+    public Map<AbstractZone, Double> getDiscreteZoneAreaMap() {
+        return dm.getZoneAreaMap();
+    }
+
+    public void toSVG(String filename) {
+        DOMImplementation domImpl =
+                GenericDOMImplementation.getDOMImplementation();
+        String svgNamespaceURI = "http://www.w3.org/2000/svg";
+
+        // Create an instance of org.w3c.dom.Document
+        Document document = domImpl.createDocument(svgNamespaceURI, "svg", null);
+
+        Element root = document.getDocumentElement();
+        //root.setAttributeNS(null, "width", "450");
+        //root.setAttributeNS(null, "height", "500");
+
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
+        zoneMap.values().stream().forEach(x -> x.stream().forEach(a -> a.toSVG(svgGenerator)));
+
+        try {
+            svgGenerator.stream(filename);
+        } catch (Exception e) {
+            // Do nothing
+            e.printStackTrace();
+            System.exit(-1);
+        }
     }
 }

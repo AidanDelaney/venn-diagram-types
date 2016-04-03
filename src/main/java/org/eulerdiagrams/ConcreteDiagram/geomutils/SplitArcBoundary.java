@@ -1,5 +1,6 @@
 package org.eulerdiagrams.ConcreteDiagram.geomutils;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,6 +19,8 @@ import math.geom2d.conic.CircleArc2D;
 import math.geom2d.domain.BoundaryPolyCurve2D;
 import math.geom2d.polygon.Polygon2D;
 import math.geom2d.polygon.SimplePolygon2D;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A SplitArcBoundary has the following properties:
@@ -218,6 +221,9 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
 
         // Pick one of these
         Optional<CircleArc2D> first = arcs.stream().findAny();
+        if(!first.isPresent()) {
+            return Optional.empty();
+        }
 
         // add the intersection arc -- Note: there can be only one.
         arcs.addAll(osab.curves.stream().filter(a -> this.bounds(a)).collect(Collectors.toSet()));
@@ -432,5 +438,9 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
 
     public int hashCode() {
         return curves.hashCode() + (closed?0:1);
+    }
+
+    public void toSVG(Graphics2D g) {
+        this.curves.stream().forEach(x -> x.draw(g));
     }
 }

@@ -75,10 +75,10 @@ public class TestConcreteDiagram {
 
         Map<AbstractZone, Double> areas = d.getZoneAreaMap();
 
-        double areaA = 0, areaB = 0, areaAB = 0;
+        double areaA = 127, areaB = 127, areaAB = 26;
 
         for(AbstractZone z: areas.keySet()) {
-            assertThat(areas.get(z), isOneOf(areaA, areaB, areaAB));
+            assertThat(areas.get(z), is(either(closeTo(areaA, 1)).or(closeTo(areaB, 1)).or(closeTo(areaAB, 1))));
         }
     }
 
@@ -89,6 +89,7 @@ public class TestConcreteDiagram {
         AbstractDiagram ad = new AbstractDiagram(new HashSet<>(Arrays.asList(a)));
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca));
         Map<AbstractZone, Double> areas = d.getZoneAreaMap();
+        Map<AbstractZone, Double> as = d.getDiscreteZoneAreaMap();
 
         // For simple diagrams, this is easier than picking out a specific zone
         for(AbstractZone z: areas.keySet()) {
@@ -152,6 +153,7 @@ public class TestConcreteDiagram {
         ConcreteDiagram d = new ConcreteDiagram(ad, Arrays.asList(ca, cb, cc));
         Map<AbstractZone, Double> areas = d.getZoneAreaMap();
 
+        d.toSVG("TestConcreteDiagram::testSplitZone.svg");
         // There should be 5 zones as cc splits the intersection of ca and cb.
         assertThat(areas.keySet().size(), is(5));
     }
@@ -174,8 +176,13 @@ public class TestConcreteDiagram {
 
         ConcreteDiagram cd = new ConcreteDiagram(ad, Arrays.asList(c1, c2, c3, c4));
         Map<AbstractZone, Double> m = cd.getZoneAreaMap();
+        Map<AbstractZone, Double> m2 = cd.getDiscreteZoneAreaMap();
 
         assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
+
+        for(AbstractZone az: m.keySet()) {
+            // assertThat(m.get(az), is(closeTo(m2.get(az), 1.0))); // Don't bother yet.
+        }
     }
 
     @Test
