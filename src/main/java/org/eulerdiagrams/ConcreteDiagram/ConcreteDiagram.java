@@ -85,13 +85,28 @@ public class ConcreteDiagram {
             }
         }
 
-        // O(n^2) check to see if a zone is contained in another zone.
+        // O(n^3) check to see if a zone is contained in another zone.
         Collection<SplitArcBoundary> allZones = zoneMap.values().stream().flatMap(s -> s.stream()).collect(Collectors.toList());
         for(SplitArcBoundary contained: allZones) {
             for(SplitArcBoundary container: allZones) {
                 if(contained.equals(container)) {continue;}
 
                 if(container.bounds(contained)) {
+                    // Two cases: Either contained is not marked as contained in another zone, or we have to figure out
+                    // if "ownership" of `contained` should move to `container` i.e. is `container` bounded by the other
+                    // "owner" of `contained`
+                    for(SplitArcBoundary p: children.keySet()) {
+                        if(children.get(p).contains(contained)) {
+                            // So, `contained` is contained by both `p` and `container`. Question now is which is the
+                            // tightest container.
+                            if(p.getArea() > container.getArea()) {
+                                children.get(p).remove(contained);
+                            } else {
+                                container = p;
+                            }
+                        }
+                    }
+
                     if(children.containsKey(container)) {
                         children.get(container).add(contained);
                     } else {

@@ -135,7 +135,7 @@ public class TestConcreteDiagram {
 
         double areaC = 2.0 * 2.0 * Math.PI;
         double areaB = (7.0 * 7.0 * Math.PI) - areaC;
-        double areaA = (10.0 * 10.0 * Math.PI) - areaB;
+        double areaA = (10.0 * 10.0 * Math.PI) - (7.0 * 7.0 * Math.PI);
         for(AbstractZone z: areas.keySet()) {
             assertThat(areas.get(z), isOneOf(areaA, areaB, areaC));
         }
