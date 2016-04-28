@@ -62,16 +62,16 @@ public class ConcreteDiagram {
             circles.add(new ConcreteCircle(p.car, p.cdr));
         }
 
-        generateClusters(circles);
+        generateZoneContainmentMap(circles);
     }
 
     public ConcreteDiagram(AbstractDiagram ad, List<ConcreteCircle> circles) {
         abstractDiagram = ad;
-        generateClusters(circles);
+        generateZoneContainmentMap(circles);
     }
 
-    private void generateClusters(List<ConcreteCircle> circles) {
-        // Generate the Venn set of the input circles.
+    private void generateZoneContainmentMap(List<ConcreteCircle> circles) {
+        // Generate the Venn set of the input circles. O(2^n)!!
         ConcreteZoneIterator czvsi = new ConcreteZoneIterator(circles);
         for(Pair<AbstractZone, Optional<SplitArcBoundary>> p : czvsi) {
             if(p.cdr.isPresent()) {
@@ -81,7 +81,25 @@ public class ConcreteDiagram {
                 } else {
                     zoneMap.put(p.car, new HashSet<SplitArcBoundary>(){{add(p.cdr.get());}});
                 }
+
             }
+        }
+
+        // O(n^2) check to see if a zone is contained in another zone.
+        Collection<SplitArcBoundary> allZones = zoneMap.values().stream().flatMap(s -> s.stream()).collect(Collectors.toList());
+        for(SplitArcBoundary contained: allZones) {
+            for(SplitArcBoundary container: allZones) {
+                if(contained.equals(container)) {continue;}
+
+                if(container.bounds(contained)) {
+                    if(children.containsKey(container)) {
+                        children.get(container).add(contained);
+                    } else {
+                        children.put(container, new HashSet<SplitArcBoundary>(){{add(contained);}});
+                    }
+                }
+            }
+
         }
         dm = new DiscreteAreaMap(circles);
     }
