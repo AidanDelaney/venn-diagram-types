@@ -143,6 +143,14 @@ public class ConcreteDiagram {
         }
     }
 
+    public Optional<Set<Point2D>> getZoneCentroid(AbstractZone az) {
+        Collection<SplitArcBoundary> zones = zoneMap.get(az);
+        if(null != zones) {
+            return Optional.of(zones.stream().map(x -> Point2D.centroid(x.vertices())).collect(Collectors.toSet()));
+        }
+        return Optional.empty();
+    }
+
     public Map<AbstractZone, Double> getZoneAreaMap () {
         Map<AbstractZone, Double> areas = new HashMap<>();
 
