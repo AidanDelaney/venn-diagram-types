@@ -3,6 +3,7 @@ package org.eulerdiagrams.ConcreteDiagram;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import math.geom2d.conic.CircleArc2D;
 import org.apache.batik.dom.GenericDOMImplementation;
@@ -20,6 +21,8 @@ import math.geom2d.conic.Circle2D;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import static java.util.stream.Stream.concat;
 
 public class ConcreteDiagram {
 
@@ -146,7 +149,13 @@ public class ConcreteDiagram {
     public Optional<Set<Point2D>> getZoneCentroid(AbstractZone az) {
         Collection<SplitArcBoundary> zones = zoneMap.get(az);
         if(null != zones) {
-            return Optional.of(zones.stream().map(x -> Point2D.centroid(x.vertices())).collect(Collectors.toSet()));
+            return Optional.of(zones.stream().map(x -> Point2D.centroid(x.midpoints())).collect(Collectors.toSet()));
+           /* return Optional.of(zones.stream().map(x -> Point2D.centroid(
+                    concat(
+                            x.vertices().stream(),
+                            x.midpoints().stream()
+                    ).collect(Collectors.toSet()))).collect(Collectors.toSet())
+            );*/
         }
         return Optional.empty();
     }

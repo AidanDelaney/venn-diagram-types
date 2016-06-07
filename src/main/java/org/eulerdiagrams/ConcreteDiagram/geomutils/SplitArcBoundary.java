@@ -436,6 +436,10 @@ public class SplitArcBoundary extends BoundaryPolyCurve2D<CircleArc2D> {
         return true;
     }
 
+    public Collection<Point2D> midpoints() {
+        return this.curves.stream().map(c -> Utils.midpoint(c)).collect(Collectors.toSet());
+    }
+
     public int hashCode() {
         return curves.hashCode() + (closed?0:1);
     }
