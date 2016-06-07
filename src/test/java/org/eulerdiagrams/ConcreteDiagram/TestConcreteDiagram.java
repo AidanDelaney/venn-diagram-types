@@ -2,6 +2,8 @@ package org.eulerdiagrams.ConcreteDiagram;
 
 import static org.junit.Assert.*;
 
+import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import org.eulerdiagrams.AbstractDiagram.AbstractContour;
@@ -9,6 +11,7 @@ import org.eulerdiagrams.AbstractDiagram.AbstractDiagram;
 import org.eulerdiagrams.AbstractDiagram.AbstractZone;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.ConcreteZoneIterator;
 import org.eulerdiagrams.ConcreteDiagram.geomutils.SplitArcBoundary;
+import org.eulerdiagrams.ConcreteDiagram.geomutils.TestUtils;
 import org.eulerdiagrams.utils.Pair;
 import org.eulerdiagrams.vennom.graph.Graph;
 import org.eulerdiagrams.vennom.graph.Node;
@@ -202,6 +205,46 @@ public class TestConcreteDiagram {
         Map<AbstractZone, Double> m = cd.getZoneAreaMap();
 
         m.entrySet().forEach(e -> logger.info(e.getKey() + " ->" + e.getValue()));
+
+        assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
+    }
+
+    @Test
+    public void testDoubleOutZone() {
+        AbstractContour a = new AbstractContour("A");
+        AbstractContour b = new AbstractContour("B");
+        AbstractContour c = new AbstractContour("C");
+        ConcreteCircle c1 = new ConcreteCircle(a, new Circle2D(-2, 0, 3));
+        ConcreteCircle c2 = new ConcreteCircle(b, new Circle2D(2, 0, 3));
+        ConcreteCircle c3 = new ConcreteCircle(c, new Circle2D(0, 2, 3));
+
+        AbstractDiagram ad = new AbstractDiagram(new HashSet(){{add(a);add(b);add(c);}});
+        ConcreteDiagram cd = new ConcreteDiagram(ad, Arrays.asList(c1, c2, c3));
+        Map<AbstractZone, Double> m = cd.getZoneAreaMap();
+
+        TestUtils tu = new TestUtils();
+        TestUtils.SVGWriter svgWriter = tu.new SVGWriter("testDoubleOutZone.svg");
+        Graphics2D svgGenerator = svgWriter.getGraphics();
+
+        try{
+            Field f = cd.getClass().getDeclaredField("zoneMap");
+            f.setAccessible(true);
+
+            AbstractZone doubleOut = new AbstractZone(new HashSet(){{add(c);}}, new HashSet(){{add(a);add(b);}});
+            Map<AbstractZone, Collection<SplitArcBoundary>> map = new HashMap<>();
+            map = (Map<AbstractZone, Collection<SplitArcBoundary>>) f.get(cd);
+
+            //Collection<SplitArcBoundary> xs = (Collection<SplitArcBoundary>) f.get(doubleOut);
+
+            Collection<SplitArcBoundary> bs = map.get(doubleOut);
+
+            bs.stream().findFirst().get().toSVG(svgGenerator);
+            svgWriter.writeSVG();
+            Optional<Set<Point2D>> center = cd.getZoneCentroid(doubleOut);
+            center.isPresent();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         assertThat(m.values(), everyItem(greaterThanOrEqualTo(0.0)));
     }

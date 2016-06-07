@@ -54,7 +54,8 @@ public class Utils {
     }
 
     protected static Point2D midpoint(CircleArc2D arc) {
-        double angle = arc.getAngleExtent() / 2.0;
-        return arc.point(angle);
+        //double angle = arc.getAngleExtent() / 2.0;
+        double t = arc.t0() + ((arc.t1() - arc.t0()) / 2.0);
+        return arc.point(t);
     }
 }
